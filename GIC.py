@@ -695,6 +695,12 @@ class Controller:
         # self._view.trajectoryPlotTab.layout.itemAtPosition(0,0)
 
     def uploadFileButton(self, fileType):
+        if not os.path.exists(os.path.realpath(os.getcwd() +"/Data/" + "fast-raw")):
+            os.mkdir(os.path.realpath(os.getcwd() +"/Data/" + "fast-raw"))
+        if not os.path.exists(os.path.realpath(os.getcwd() +"/Data/" + "fast-tif")):
+            os.mkdir(os.path.realpath(os.getcwd() +"/Data/" + "fast-tif"))
+        if not os.path.exists(os.path.realpath(os.getcwd() +"/Data/" + "h5-file")):
+            os.mkdir(os.path.realpath(os.getcwd() +"/Data/" + "h5-file"))
         selectionFile = self._view.comboFileList.currentData()
         if selectionFile == []:
             selectionFile = [self._view.comboFileList.itemText(i) for i in range(self._view.comboFileList.count())]
