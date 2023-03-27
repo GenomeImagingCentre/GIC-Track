@@ -64,7 +64,7 @@ for j = 1:nJumps    % for loop on different jump sizes
       jd_temp_x = tracks(idx,1);      % Calculate jumps for the i-th
       jd_temp_y = tracks(idx,2);      % track with the j-th interval
 
-      if analysis_type == 'percentage'
+      if analysis_type == "percentage"
         JumpsToConsider = floor((clip_factor / 100) * length(idx));
       else
         if length(idx) < clip_factor
@@ -74,7 +74,7 @@ for j = 1:nJumps    % for loop on different jump sizes
         end
       end
 
-      FrameToStop = min(numel(idx) - j, idx(JumpsToConsider));
+      FrameToStop = min(numel(idx), idx(JumpsToConsider));
       %             jd_temp = sqrt((jd_temp_x(j+1:end)- jd_temp_x(1:end-j)).^2 + ...
       %                 (jd_temp_y(j+1:end)- jd_temp_y(1:end-j)).^2);
       jd_temp = sqrt((jd_temp_x(j+1:FrameToStop)- jd_temp_x(1:FrameToStop-j)).^2 + ...
