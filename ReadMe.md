@@ -163,3 +163,25 @@ Note that the angle diversion do not account for whether it's clockwise or anti-
 | threeParD1Values | REAL | - |
 | threeParD2Values | REAL | - |
 | threeParD3Values | REAL | - |
+
+# Reference
+Previously published algorithms, analysis, and scripts that are utilized in the dashboard can be found below: <br>
+
+## Localization and Tracking:
+D. M. McSwiggen et al. (2019) Evidence for DNA-mediated nuclear compartmentalization distinct from phase separation. eLife. 8:e47098. <br>
+A. Sergé et al. (2008) Dynamic multiple-target tracing to probe spatiotemporal cartography of cell membranes. Nature methods, 5(8):687. <br>
+
+## MSD-Based Diffusion Plot
+J. Chen et al. (2014) Single-molecule dynamics of enhanceosome assembly in embryonic stem cells. Cell. 156(6):1274 - 1285. <br>
+
+## Jump Distance Plot:
+D. Mazza et al. (2013) Monitoring dynamic binding of chromatin proteins in vivo by single-molecule tracking. Methods Mol Biol. 1042:117-37. <br>
+
+## Angle Plots:
+I. Izeddin et. al. (2014), Single-molecule tracking in live cells reveals distinct target-search strategies of transcription factors in the nucleus. eLife. 3:e02230. <br>
+
+## Heat Map:
+J. O. Andrews et al. (2018) qSR: a quantitative super-resolution analysis tool reveals the cell-cycle dependent organization of RNA Polymerase I in live human cells. Sci Rep. 7424 (2018). <br>
+
+## Dwell Time:
+A.J. McCann et al. (2021) A dominant-negative SOX18 mutant disrupts multiple regulatory layers essential to transcription factor activity. Nucleic Acids Res. 49(19):10931-10955. Developed by Zhe Liu in Janelia Research Campus.
