@@ -32,8 +32,8 @@ Condition-2_Cell_3.tiff <br>
 | exposure_time | REAL| Exposure time in ms. |
 | pixelSize | REAL | Pixel size of the data (in &mu;m). |
 | cellSize | REAL | The size of the cell/nucleus based on segmented data (in pixels). |
-| psfScale | REAL | - |
-| wvlngth | REAL | - |
+| psfScale | REAL | Point spread function value of the microscope (user input in dashboard). |
+| wvlngth | REAL | The wavelength of the emission used by the microscope (user input in dashboard). |
 | iNA | REAL | - |
 | psfStd | REAL | - |
 | wn | REAL | - |
@@ -42,23 +42,23 @@ Condition-2_Cell_3.tiff <br>
 | minInt | REAL | - |
 | maxOptimIter | REAL | - |
 | termTol | REAL | - |
-| isRadiusTol | INTEGER | - |
+| isRadiusTol | INTEGER | Is radius tolerance feature used for the tracking algorithm (user input in dashboard). |
 | radiusTol | REAL | - |
 | posTol | REAL | - |
 | optim_termTol | REAL | - |
 | optim_radTol | REAL | - |
 | optim_radTol | REAL | - |
 | optim_posTol | REAL | - |
-| isThreshLocPrec | INTEGER | - |
+| isThreshLocPrec | INTEGER | Is radius tolerance feature used for the tracking algorithm (user input in dashboard). |
 | minLoc | REAL | - |
 | maxLoc | REAL | - |
-| isThreshSNR | INTEGER | - |
+| isThreshSNR | INTEGER | Is signal-to-noise threshold feature used for the tracking algorithm (user input in dashboard). |
 | minSNR | REAL | - |
 | maxSNR | REAL | - |
-| isThreshDensity | INTEGER | - |
+| isThreshDensity | INTEGER | Is density threshold feature used for the tracking algorithm (user input in dashboard). |
 | trackStart | REAL | - |
 | trackEnd | REAL | - |
-| Dmax | REAL | - |
+| Dmax | REAL | The maximum expected diffusion coefficient (in &mu;m<sup>2</sup>/s) of the uploaded file (user input in dashboard). |
 | searchExpFac | REAL | - |
 | statWin | REAL | - |
 | maxComp | REAL | - |
@@ -66,40 +66,42 @@ Condition-2_Cell_3.tiff <br>
 | intLawWeight | REAL | - |
 | diffLawWeight | REAL | - |
 | bleach_rate | REAL | - |
-| traj_length | INTEGER | - |
-| min_traj | INTEGER | - |
-| clip_factor | INTEGER | - |
+| traj_length | INTEGER | **Quality Control:** The minimum number of tracks in a trajectory (trajectories with fewer number than this will be discarded). |
+| min_traj | INTEGER | **Quality Control:** The minimum number of trajectories in a file (files with fewer trajectories than this number will be discarded). |
+| clip_factor | INTEGER | The number/percentage (depending on "Analysis Type:" selected in the dashboard) of a trajectories (from when it first being formed) to be used in the "mean square displacement" analysis.|
 | tol | INTEGER | - |
-| twoParN | REAL | - |
-| twoPardN | REAL | - |
-| twoParD1 | REAL | - |
-| twoPardD1 | REAL | - |
-| twoParD2 | REAL | - |
-| twoPardD2 | REAL | - |
-| twoParf1 | REAL | - |
-| twoPardf1 | REAL | - |
-| twoParSSR | REAL | - |
-| twoParN | REAL | - |
-| twoPardN | REAL | - |
-| threeParD1 | REAL | - |
-| threePardD1 | REAL | - |
-| threeParD2 | REAL | - |
-| threePardD2 | REAL | - |
-| threeParD3 | REAL | - |
-| threePardD3 | REAL | - |
-| threeParf1 | REAL | - |
-| threePardf1 | REAL | - |
-| threeParf2 | REAL | - |
-| threePardf2 | REAL | - |
-| threeParSSR | REAL | - |
+| twoParN | REAL | The number of tracks that are used in two parameters fitting (used for jump distance plots in the dashboard). |
+| twoPardN | REAL | The number of tracks variation that are used in two parameters fitting (used for jump distance plots in the dashboard). |
+| twoParD1 | REAL | The "immobile" diffusion coefficient (in &mu;m<sup>2</sup>/s) computed from two parameters fitting model (used for jump distance plots in the dashboard). |
+| twoPardD1 | REAL | The variation of "immobile" diffusion coefficient (in &mu;m<sup>2</sup>/s) computed from two parameters fitting model (used for jump distance plots in the dashboard). |
+| twoParD2 | REAL | The variation of "mobile" diffusion coefficient (in &mu;m<sup>2</sup>/s) computed from two parameters fitting model (used for jump distance plots in the dashboard). |
+| twoPardD2 | REAL | The variation of "mobile" diffusion coefficient (in &mu;m<sup>2</sup>/s) computed from two parameters fitting model (used for jump distance plots in the dashboard). |
+| twoParf1 | REAL | The fraction of "immobile" tracks computed from two parameters fitting model (used for jump distance plots in the dashboard). |
+| twoPardf1 | REAL | The variation of fraction of "immobile" tracks computed from two parameters fitting model (used for jump distance plots in the dashboard). |
+| twoParSSR | REAL | The "sum of squares due to regression" of the two parameters fitting model (used for jump distance plots in the dashboard).  |
+| threeParN | REAL | The number of tracks that are used in three parameters fitting (used for jump distance plots in the dashboard). |
+| threePardN | REAL | The number of tracks variation that are used in three parameters fitting (used for jump distance plots in the dashboard). |
+| threeParD1 | REAL | The "immobile" diffusion coefficient (in &mu;m<sup>2</sup>/s) computed from three parameters fitting model (used for jump distance plots in the dashboard). |
+| threePardD1 | REAL | The variation of "immobile" diffusion coefficient (in &mu;m<sup>2</sup>/s) computed from three parameters fitting model (used for jump distance plots in the dashboard). |
+| threeParD2 | REAL | The variation of "mixed" diffusion coefficient (in &mu;m<sup>2</sup>/s) computed from three parameters fitting model (used for jump distance plots in the dashboard). |
+| threePardD2 | REAL | The variation of "mixed" diffusion coefficient (in &mu;m<sup>2</sup>/s) computed from three parameters fitting model (used for jump distance plots in the dashboard). |
+| threeParD3 | REAL | The variation of "mobile" diffusion coefficient (in &mu;m<sup>2</sup>/s) computed from three parameters fitting model (used for jump distance plots in the dashboard). |
+| threePardD3 | REAL | The variation of "mobile" diffusion coefficient (in &mu;m<sup>2</sup>/s) computed from three parameters fitting model (used for jump distance plots in the dashboard). |
+| threeParf1 | REAL | The fraction of "immobile" tracks computed from three parameters fitting model (used for jump distance plots in the dashboard). |
+| threePardf1 | REAL | The variation of fraction of "immobile" tracks computed from three parameters fitting model (used for jump distance plots in the dashboard). |
+| threeParf2 | REAL | The fraction of "mixed" tracks computed from three parameters fitting model (used for jump distance plots in the dashboard). |
+| threePardf2 | REAL | The variation of fraction of "mixed" tracks computed from three parameters fitting model (used for jump distance plots in the dashboard). |
+| threeParSSR | REAL | The "sum of squares due to regression" of the three parameters fitting model (used for jump distance plots in the dashboard). |
 
+SSR is computed as follows: <br>
+$$\sum_{i=1}^n \left( \hat{y}_{i}-\bar{y})^{2} \right)$$
 ## TrajectoryList
 | Parameter | Type | Description |
 | --- | --- | --- |
 | filename | TEXT | The filename that contribute to the dataset. |
 | trajID | TEXT | The ID used to identify this trajectory. |
 | traj_length | INTEGER | The total number of frames this trajectory existed. |
-| msd | REAL | - |
+| msd | REAL | The average value of all the tracks' "mean square displacement" in the trajectory. |
 | D | REAL | The diffusion coefficient of the trajectory (in Log<sub>10</sub>(&mu;m<sup>2</sup>)). |
 | startTime | REAL | The time stamp the trajectory first appear. |
 | endTime | REAL | The time stamp the trajectory is last seen. |
@@ -116,7 +118,7 @@ Condition-2_Cell_3.tiff <br>
 | Frame | REAL | The time the track is being observed (computed from the frame number it's being detected in and "exposure time"). |
 | x | REAL | The X-coordinate of the track at "Frame". |
 | y | REAL | The Y-coordinate of the track at "Frame". |
-| msd | REAL | The mean square displacement of the tracj with respect to its previous position (in the previous "Frame"). |
+| msd | REAL | The "mean square displacement" of the track with respect to its previous position (in the previous "Frame"). |
 | distance | REAL | The distance this track moved with respect to its previous position (in the previous "Frame"). |
 | angle | REAL | The angle between the track at "Frame" with respect to its two previous position. |
 
@@ -154,15 +156,15 @@ Note that the angle diversion do not account for whether it's clockwise or anti-
 | Parameter | Type | Description |
 | --- | --- | --- |
 | filename | TEXT | The filename that contribute to the dataset. |
-| jump_distance | REAL | - |
-| sharedFrequency | REAL | - |
-| twoParFrequency | REAL | - |
-| threeParFrequency | REAL | - |
-| twoParD1Values | REAL | - |
-| twoParD2Values | REAL | - |
-| threeParD1Values | REAL | - |
-| threeParD2Values | REAL | - |
-| threeParD3Values | REAL | - |
+| jump_distance | REAL | The jump distance tick (used for jump distance plots in the dashboard). |
+| sharedFrequency | REAL | The number of tracks that fall within the "jump_distance" tick (used for jump distance plots in the dashboard). |
+| twoParFrequency | REAL | The number of tracks that fall within the "jump_distance" tick based on two parameters fitting (used for jump distance plots in the dashboard). |
+| threeParFrequency | REAL | The number of tracks that fall within the "jump_distance" tick based on three parameters fitting (used for jump distance plots in the dashboard). |
+| twoParD1Values | REAL | The number of tracks that are "immobile" fall within the "jump_distance" tick based on two parameters fitting (used for jump distance plots in the dashboard). |
+| twoParD2Values | REAL | The number of tracks that are "mobile" fall within the "jump_distance" tick based on two parameters fitting (used for jump distance plots in the dashboard). |
+| threeParD1Values | REAL | The number of tracks that are "immobile" fall within the "jump_distance" tick based on three parameters fitting (used for jump distance plots in the dashboard). |
+| threeParD2Values | REAL | The number of tracks that are "mixed" fall within the "jump_distance" tick based on three parameters fitting (used for jump distance plots in the dashboard). |
+| threeParD3Values | REAL | The number of tracks that are "immobile" fall within the "jump_distance" tick based on three parameters fitting (used for jump distance plots in the dashboard). |
 
 # Reference
 Previously published algorithms, analysis, and scripts that are utilized in the dashboard can be found below: <br>
