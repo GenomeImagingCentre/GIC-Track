@@ -34,21 +34,17 @@ Condition-2_Cell_3.tiff <br>
 | cellSize | REAL | The size of the cell/nucleus based on segmented data (in pixels). |
 | psfScale | REAL | Point spread function value of the microscope (user input in dashboard). |
 | wvlngth | REAL | The wavelength of the emission used by the microscope (user input in dashboard). |
-| iNA | REAL | - |
-| psfStd | REAL | - |
-| wn | REAL | - |
+| iNA | REAL | The "Numerical Aperture" of the microscope used to gather the data (user input in dashboard).|
+| psfStd | REAL | The deviation of the "point spread function" based on "psfScale", "wvlnth", "iNA" and "pixelSize". $psfStd = \frac{psf\textunderscore scale * \left( 0.55 * wvlnth \right)}{2 * iNA * pixelSize * 1.17}$ |
+| wn | REAL | Spatial sliding window width used for particle detection (in pixels). |
 | errorRate | REAL | - |
 | dfltnLoops | REAL | - |
 | minInt | REAL | - |
-| maxOptimIter | REAL | - |
-| termTol | REAL | - |
-| isRadiusTol | INTEGER | Is radius tolerance feature used for the tracking algorithm (user input in dashboard). |
-| radiusTol | REAL | - |
-| posTol | REAL | - |
-| optim_termTol | REAL | - |
-| optim_radTol | REAL | - |
-| optim_radTol | REAL | - |
-| optim_posTol | REAL | - |
+| optim_MaxIter | REAL | The maximum number of iteration allowed during localization optimization. |
+| optim_termTol | REAL | The termination tolerance (the value is 10 to the power of the input value). If the variation of x and y coordinates is lesser than this, the iteration will stop (variation of Gaussian radius will be checked as well if "optim_isRadTol" is activated). |
+| optim_isRadTol | INTEGER | Is Gaussian radius variation tolerance feature used for the localization algorithm (user input in dashboard). |
+| optim_radiusTol | REAL | The Gaussian radius tolerance (in percentage) with respect to "point spread function deviation" (psfStd). |
+| optim_posTol | REAL | The tolerance for the x and y coordinates of the point detected during the localization (in pixels). |
 | isThreshLocPrec | INTEGER | Is radius tolerance feature used for the tracking algorithm (user input in dashboard). |
 | minLoc | REAL | - |
 | maxLoc | REAL | - |
