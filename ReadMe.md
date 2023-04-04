@@ -52,8 +52,8 @@ Condition-2_Cell_3.tiff <br>
 | minSNR | REAL | - |
 | maxSNR | REAL | - |
 | isThreshDensity | INTEGER | Is density threshold feature used for the tracking algorithm (user input in dashboard). |
-| trackStart | REAL | - |
-| trackEnd | REAL | - |
+| trackStart | REAL | Currently not being used. |
+| trackEnd | REAL | Currently not being used. |
 | Dmax | REAL | The maximum expected diffusion coefficient (in &mu;m<sup>2</sup>/s) of the uploaded file (user input in dashboard). |
 | searchExpFac | REAL | - |
 | statWin | REAL | - |
