@@ -65,7 +65,7 @@ Condition-2_Cell_3.tiff <br>
 | traj_length | INTEGER | **Quality Control:** The minimum number of tracks in a trajectory (trajectories with fewer number than this will be discarded). |
 | min_traj | INTEGER | **Quality Control:** The minimum number of trajectories in a file (files with fewer trajectories than this number will be discarded). |
 | clip_factor | INTEGER | The number/percentage (depending on "Analysis Type:" selected in the dashboard) of a trajectories (from when it first being formed) to be used in the "mean square displacement" analysis.|
-| tol | INTEGER | - |
+| tol | INTEGER | The number of decimals to keep during during computation of "mean square displacement". |
 | twoParN | REAL | The number of tracks that are used in two parameters fitting (used for jump distance plots in the dashboard). |
 | twoPardN | REAL | The number of tracks variation that are used in two parameters fitting (used for jump distance plots in the dashboard). |
 | twoParD1 | REAL | The "immobile" diffusion coefficient (in &mu;m<sup>2</sup>/s) computed from two parameters fitting model (used for jump distance plots in the dashboard). |
