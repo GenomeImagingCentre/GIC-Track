@@ -46,19 +46,19 @@ Condition-2_Cell_3.tiff <br>
 | optim_radiusTol | REAL | The Gaussian radius tolerance (in percentage) with respect to "point spread function deviation" (psfStd). |
 | optim_posTol | REAL | The tolerance for the x and y coordinates of the point detected during the localization (in pixels). |
 | isThreshLocPrec | INTEGER | Is radius tolerance feature used for the tracking algorithm (user input in dashboard). |
-| minLoc | REAL | - |
-| maxLoc | REAL | - |
+| minLoc | REAL | **Currently not being used.** |
+| maxLoc | REAL | **Currently not being used.** |
 | isThreshSNR | INTEGER | Is signal-to-noise threshold feature used for the tracking algorithm (user input in dashboard). |
-| minSNR | REAL | - |
-| maxSNR | REAL | - |
+| minSNR | REAL | **Currently not being used.** |
+| maxSNR | REAL | **Currently not being used.** |
 | isThreshDensity | INTEGER | Is density threshold feature used for the tracking algorithm (user input in dashboard). |
-| trackStart | REAL | Currently not being used. |
-| trackEnd | REAL | Currently not being used. |
+| trackStart | REAL | **Currently not being used.** |
+| trackEnd | REAL | **Currently not being used.** |
 | Dmax | REAL | The maximum expected diffusion coefficient (in &mu;m<sup>2</sup>/s) of the uploaded file (user input in dashboard). |
 | searchExpFac | REAL | - |
-| statWin | REAL | - |
-| maxComp | REAL | - |
-| maxOffTime | REAL | - |
+| statWin | REAL | Number of frames data to be used in computing trajectories data. |
+| maxComp | REAL | Maximum number of trajectories a point can belong to (during trajectories forming stage). |
+| maxOffTime | REAL | Maximum number of frames allowed to be in-between a trajectory for it to still be classify as the same trajectory (for situation where particles could fade out of focus). |
 | intLawWeight | REAL | - |
 | diffLawWeight | REAL | - |
 | bleach_rate | REAL | - |
