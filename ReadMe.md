@@ -37,9 +37,9 @@ Condition-2_Cell_3.tiff <br>
 | iNA | REAL | The "Numerical Aperture" of the microscope used to gather the data (user input in dashboard).|
 | psfStd | REAL | The deviation of the "point spread function" based on "psfScale", "wvlnth", "iNA" and "pixelSize". $psfStd = \frac{psf\textunderscore scale * \left( 0.55 * wvlnth \right)}{2 * iNA * pixelSize * 1.17}$ |
 | wn | REAL | Spatial sliding window width used for particle detection (in pixels). |
-| errorRate | REAL | - |
-| dfltnLoops | REAL | - |
-| minInt | REAL | - |
+| errorRate | REAL | The maximum difference between $H_{0}$ and $H_{1}$ hypothesis that are still accepted as a detected point. <br> Refer to [Sergé et al. Nature Methods 5:687-694 (2008)](https://www.nature.com/articles/nmeth.1233)'s [Supplementary Text and Figures](https://static-content.springer.com/esm/art%3A10.1038%2Fnmeth.1233/MediaObjects/41592_2008_BFnmeth1233_MOESM292_ESM.pdf)'s Equation [4].|
+| dfltnLoops | REAL | Number of deflation loops (usually 0, but useful if the image density is too high).  |
+| minInt | REAL | Minimum intensity to be classified as a point. |
 | optim_MaxIter | REAL | The maximum number of iteration allowed during localization optimization. |
 | optim_termTol | REAL | The termination tolerance (the value is 10 to the power of the input value). If the variation of x and y coordinates is lesser than this, the iteration will stop (variation of Gaussian radius will be checked as well if "optim_isRadTol" is activated). |
 | optim_isRadTol | INTEGER | Is Gaussian radius variation tolerance feature used for the localization algorithm (user input in dashboard). |
