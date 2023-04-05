@@ -59,8 +59,8 @@ Condition-2_Cell_3.tiff <br>
 | statWin | REAL | Number of frames data to be used in computing trajectories data. |
 | maxComp | REAL | Maximum number of trajectories a point can belong to (during trajectories forming stage). |
 | maxOffTime | REAL | Maximum number of frames allowed to be in-between a trajectory for it to still be classify as the same trajectory (for situation where particles could fade out of focus). |
-| intLawWeight | REAL | - |
-| diffLawWeight | REAL | - |
+| intLawWeight | REAL | The intensity probability law weighting, value ranges from 0 to 1.0, with 1.0 accounting for intensity staying on and 0 accounting for blinking state. <br> The reconnection procedure take into account the point's intensity, diffusion and blinking. |
+| diffLawWeight | REAL | The diffusion probability law weighting, value ranges from 0 to 1.0, with 1.0 accounting for local diffusion (based on estimated standard deviation of diffusion based on "statWin" number of past frames information) and 0 accounting for free diffusion. <br> The reconnection procedure take into account the point's intensity, diffusion and blinking, a value of 0.9 with emphasizes on local behaviour while allowing the possibility of a sudden increase towards free diffusion. |
 | bleach_rate | REAL | - |
 | traj_length | INTEGER | **Quality Control:** The minimum number of tracks in a trajectory (trajectories with fewer number than this will be discarded). |
 | min_traj | INTEGER | **Quality Control:** The minimum number of trajectories in a file (files with fewer trajectories than this number will be discarded). |
