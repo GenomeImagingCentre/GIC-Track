@@ -55,7 +55,7 @@ Condition-2_Cell_3.tiff <br>
 | trackStart | REAL | **Currently not being used.** |
 | trackEnd | REAL | **Currently not being used.** |
 | Dmax | REAL | The maximum expected diffusion coefficient (in &mu;m<sup>2</sup>/s) of the uploaded file (user input in dashboard). |
-| searchExpFac | REAL | - |
+| searchExpFac | REAL | Search exploration factor. <br> The maximum amount a trajectory can move is computed as $searchExpFac * \frac{Dmax}{pixelSize^{2} * 4 * \frac{exposureTime}{1000}}$. |
 | statWin | REAL | Number of frames data to be used in computing trajectories data. |
 | maxComp | REAL | Maximum number of trajectories a point can belong to (during trajectories forming stage). |
 | maxOffTime | REAL | Maximum number of frames allowed to be in-between a trajectory for it to still be classify as the same trajectory (for situation where particles could fade out of focus). |
