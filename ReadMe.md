@@ -45,13 +45,13 @@ Condition-2_Cell_3.tiff <br>
 | optim_isRadTol | INTEGER | Is Gaussian radius variation tolerance feature used for the localization algorithm (user input in dashboard). |
 | optim_radiusTol | REAL | The Gaussian radius tolerance (in percentage) with respect to "point spread function deviation" (psfStd). |
 | optim_posTol | REAL | The tolerance for the x and y coordinates of the point detected during the localization (in pixels). |
-| isThreshLocPrec | INTEGER | Is radius tolerance feature used for the tracking algorithm (user input in dashboard). |
+| isThreshLocPrec | INTEGER |  **Currently not being used.** <br> Is radius tolerance feature used for the tracking algorithm (user input in dashboard). |
 | minLoc | REAL | **Currently not being used.** |
 | maxLoc | REAL | **Currently not being used.** |
-| isThreshSNR | INTEGER | Is signal-to-noise threshold feature used for the tracking algorithm (user input in dashboard). |
+| isThreshSNR | INTEGER |  **Currently not being used.** <br> Is signal-to-noise threshold feature used for the tracking algorithm (user input in dashboard). |
 | minSNR | REAL | **Currently not being used.** |
 | maxSNR | REAL | **Currently not being used.** |
-| isThreshDensity | INTEGER | Is density threshold feature used for the tracking algorithm (user input in dashboard). |
+| isThreshDensity | INTEGER |  **Currently not being used.** <br> Is density threshold feature used for the tracking algorithm (user input in dashboard). |
 | trackStart | REAL | **Currently not being used.** |
 | trackEnd | REAL | **Currently not being used.** |
 | Dmax | REAL | The maximum expected diffusion coefficient (in &mu;m<sup>2</sup>/s) of the uploaded file (user input in dashboard). |
