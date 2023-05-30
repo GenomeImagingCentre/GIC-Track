@@ -1108,7 +1108,7 @@ class Controller:
         # fastData.replace(np.inf, 2, inplace = True)
         # fastData.replace(-np.inf, -2, inplace = True)
 
-        boundaryD = 0
+        boundaryD = self._view.diffusionBoundary.value()
         boundIndex = fastData.groupby(["mutation", "filename", "trajID"]).apply(lambda fastData, x, boundaryD: np.mean(fastData[x]) <= boundaryD, "D", boundaryD).reset_index().loc[:, 0] == True
         diffuIndex = fastData.groupby(["mutation", "filename", "trajID"]).apply(lambda fastData, x, boundaryD: np.mean(fastData[x]) > boundaryD, "D", boundaryD).reset_index().loc[:, 0] == True
         trajBG = fastData.groupby(["mutation", "filename", "trajID"]).apply(lambda fastData, x: np.round(np.mean(fastData[x])), "bgRegion").reset_index()
@@ -1289,6 +1289,9 @@ class Controller:
         self._view.acquisitionRateSlow.clicked.connect(partial(self.loadUploadPreset, "slow"))
         self._view.uploadFileButton.pressed.connect(partial(self.uploadFileButton, "raw_files"))
         self._view.uploadPostFileButton.pressed.connect(partial(self.uploadFileButton, "post_files"))
+
+        # Chromatin tab
+        self._view.diffusionBoundary.valueChanged.connect(self.chromatinTabUpdate)
     
     def loadUploadPreset(self, presetType):
         # Store current values
@@ -3255,13 +3258,16 @@ class GICDashboard(QWidget):
         self.chromatinSlow_browser = QtWebEngineWidgets.QWebEngineView(self)
         self.chromatinSlow_browser.setMinimumSize(400, 400)
 
-        self.xAxisSelection = QComboBox()
-        self.xAxisSelection.setMaximumWidth(200)
+        self.diffusionBoundary = QDoubleSpinBox()
+        self.diffusionBoundary.setMinimum(-99.99)
+        self.diffusionBoundary.setMaximum(99.99)
+        self.diffusionBoundary.setValue(0)
+        self.diffusionBoundary.setMaximumWidth(200)
         yAxisText = QLabel()
         yAxisText.setText("")
         self.yAxisSelection = QComboBox()
 
-        self.chromatinTab.layout.addWidget(self.xAxisSelection, 1, 0, 1, 1)
+        self.chromatinTab.layout.addWidget(self.diffusionBoundary, 1, 0, 1, 1)
         self.chromatinTab.layout.addWidget(yAxisText, 2, 0, 1, 1)
         self.chromatinTab.layout.addWidget(self.yAxisSelection, 3, 0, 1, 1)
         self.chromatinTab.layout.addWidget(self.chromatinAC_browser, 0, 1, 1, 1)
