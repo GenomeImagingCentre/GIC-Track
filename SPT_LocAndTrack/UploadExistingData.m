@@ -234,7 +234,8 @@ if runParallel
       dataAngle = [dataAngle; n, histcounts(Theta, deg2rad([0:10:180]))];
       dataTraj = [dataTraj; convertCharsToStrings(Filenames{iter}), n, traj_size, mean(msd{n}(1 : traj_size, 2), 'omitnan'), D(n), tracks(n).data(1,1), tracks(n).data(end,1)];
       %     dataTrack = [dataTrack; repelem(n, traj_size)', tracks(n).data, msd{n}(1 : traj_size, 2)];
-      dataTrack = [dataTrack; repelem(n, traj_size)', tracks(n).data, msd{n}(1 : traj_size, 2), [0, dist(2:traj_size)]', [zeros(traj_size - length(Theta), 1); Theta]];
+%       dataTrack = [dataTrack; repelem(n, traj_size)', tracks(n).data, msd{n}(1 : traj_size, 2), [0, dist(2:traj_size)]', [zeros(traj_size - length(Theta), 1); Theta]];
+      dataTrack = [dataTrack; repelem(n, traj_size)', tracks(n).data(:, 1:3), msd{n}(1 : traj_size, 2), [0, dist(2:traj_size)]', [zeros(traj_size - length(Theta), 1); Theta], repelem(0, traj_size)', repelem(0, traj_size)'];
     end
     dataTraj = cellstr(dataTraj);
     parsaveangle([output_path, Filenames{iter}], dataAngle, dataTraj, dataTrack, E, msd)
@@ -350,7 +351,8 @@ else
       dataAngle = [dataAngle; n, histcounts(Theta, deg2rad([0:10:180]))];
       dataTraj = [dataTraj; convertCharsToStrings(Filenames{iter}), n, traj_size, mean(msd{n}(1 : traj_size, 2), 'omitnan'), D(n), tracks(n).data(1,1), tracks(n).data(end,1)];
       %     dataTrack = [dataTrack; repelem(n, traj_size)', tracks(n).data, msd{n}(1 : traj_size, 2)];
-      dataTrack = [dataTrack; repelem(n, traj_size)', tracks(n).data, msd{n}(1 : traj_size, 2), [0, dist(2:traj_size)]', [zeros(traj_size - length(Theta), 1); Theta]];
+%       dataTrack = [dataTrack; repelem(n, traj_size)', tracks(n).data, msd{n}(1 : traj_size, 2), [0, dist(2:traj_size)]', [zeros(traj_size - length(Theta), 1); Theta]];
+      dataTrack = [dataTrack; repelem(n, traj_size)', tracks(n).data(:, 1:3), msd{n}(1 : traj_size, 2), [0, dist(2:traj_size)]', [zeros(traj_size - length(Theta), 1); Theta], repelem(0, traj_size)', repelem(0, traj_size)'];
     end
     dataTraj = cellstr(dataTraj);
     save([output_path, Filenames{iter}, '_dataAngle.mat'], 'dataAngle');

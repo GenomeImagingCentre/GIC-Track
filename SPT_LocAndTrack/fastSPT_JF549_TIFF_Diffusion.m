@@ -21,7 +21,8 @@ disp('added paths for MTT algorithm mechanics, bioformats...');
 
 load("../tifupload.mat");
 bins = 20; % temp, will move plotting to dashboard
-% runParallel = false;
+runParallel = false;
+% runParallel = true;
 
 %% Getting file names
 if iscell(file_names)
@@ -127,26 +128,6 @@ if runParallel
     disp(['Localized and tracked ', num2str(length(trackedPar)), ' trajectories']);
     parsave([output_path, Filenames{iter}, '_Tracked.mat'], trackedPar, settings);
     toc;
-    % Producing data for dashboard
-    tracks = struct('data', []);
-    for n = 1 : numel(trackedPar)
-      tracks(n) = struct('data', [trackedPar(n).TimeStamp, trackedPar(n).xy]);
-    end
-
-    rows_to_remove = [];
-    for n = 1 : numel(tracks)
-      if size(tracks(n).data, 1) < traj_length
-        rows_to_remove = [rows_to_remove; n];
-      end
-    end
-    tracks(rows_to_remove) = [];
-
-    trackedData = ["TF_number" "Frame" "x_coord" "y_coord"];
-    for n = 1 : length(tracks)
-      track_length = size(tracks(n).data, 1);
-      trackedData = [trackedData; [repelem(n, track_length)' tracks(n).data(:, 1)./impars.FrameRate tracks(n).data(:, 2:3)]];
-    end
-    writematrix(trackedData, strcat(output_path_further_processing, "fast_", Filenames{iter}), 'Delimiter', ',')
     disp('-----------------------------------------------------------------');
   end
 else % single core
@@ -161,8 +142,8 @@ else % single core
     
     % convert to 3D matrix as double:
     imgs_3d_double = double(reshape([stack.data], size(stack(1).data, 1), size(stack(1).data, 2), nbImages));
-    cellData = length(find(imgs_3d_double(:,:,10) > 0));
-    save([output_path, Filenames{iter}, '_cellData.mat'], 'cellData');
+%     cellData = length(find(imgs_3d_double(:,:,10) > 0));
+%     save([output_path, Filenames{iter}, '_cellData.mat'], 'cellData');
 %     imgs_3d_double = zeros(size(stack(1,1).data,1), size(stack(1,1).data,2), nbImages);
 %     for img_iter = 1:nbImages
 %       imgs_3d_double(:,:,img_iter) = stack(img_iter).data;
@@ -217,26 +198,6 @@ else % single core
     disp(['Localized and tracked ', num2str(length(trackedPar)), ' trajectories']);
     save([output_path, Filenames{iter}, '_Tracked.mat'], 'trackedPar', 'settings');
     toc;
-    % Producing data for dashboard
-    tracks = struct('data', []);
-    for n = 1 : numel(trackedPar)
-      tracks(n) = struct('data', [trackedPar(n).TimeStamp, trackedPar(n).xy]);
-    end
-
-    rows_to_remove = [];
-    for n = 1 : numel(tracks)
-      if size(tracks(n).data, 1) < traj_length
-        rows_to_remove = [rows_to_remove; n];
-      end
-    end
-    tracks(rows_to_remove) = [];
-
-    trackedData = ["TF_number" "Frame" "x_coord" "y_coord"];
-    for n = 1 : length(tracks)
-      track_length = size(tracks(n).data, 1);
-      trackedData = [trackedData; [repelem(n, track_length)' tracks(n).data(:, 1)./impars.FrameRate tracks(n).data(:, 2:3)]];
-    end
-    writematrix(trackedData, strcat(output_path_further_processing, "fast_", extractBefore(Filenames(iter),".tif")), 'Delimiter', ',')
     clear imgs_3d_matrix imgs_3d_double data_cell_array trackedPar
     disp('-----------------------------------------------------------------');
   end
@@ -261,18 +222,32 @@ save([output_path_further_processing, 'rejectedFiles.mat'], 'rejectedFiles');
 %% Producing slow acquisition data
 if acquisition_rate == "slow"
   for k = 1:numel(Filenames)
-    fnm = fullfile([output_path_further_processing, Filenames{k}, '_table.txt']);
-    txt = importdata(fnm);
-    index = unique(txt(:,4));
-    [p,~] = size(index);
+%     fnm = fullfile([output_path_further_processing, Filenames{k}, '_table.txt']);
+%     txt = importdata(fnm);
+%     index = unique(txt(:,4));
+%     [p,~] = size(index);
+% 
+%     tracklength = zeros(p, 1);
+%     for i=1:p
+%       logi=find(txt(:,4)==index(i));
+%       tracklength(i) = (txt(logi(end),3)-txt(logi(1),3)+1);
+%     end
+    load([output_path, filesep, Filenames{k}, '_Tracked.mat'])
 
-    tracklength = zeros(p, 1);
-    for i=1:p
-      logi=find(txt(:,4)==index(i));
-      tracklength(i) = (txt(logi(end),3)-txt(logi(1),3)+1);
+%     toRemove = [];
+%     for n = 1 : length(trackedPar)
+%       if length(trackedPar(n).Frame) > 10
+%         toRemove = [toRemove; n];
+%       end
+%     end
+%     trackedPar(toRemove) = [];
+    tracklength = zeros(length(trackedPar), 1);
+    for i = 1 : length(trackedPar)
+      tracklength(i) = length(trackedPar(i).Frame);
     end
+
     tracklength = (ExposureTime / 1000) * tracklength;
-    writematrix(tracklength', [fnm(1:end-4) '_dwelltime.txt'], 'delimiter', '\t');
+%     writematrix(tracklength', [fnm(1:end-4) '_dwelltime.txt'], 'delimiter', '\t');
     a = tracklength;
     binsize = 1;
     binwindows = 0:binsize:1000;
@@ -319,7 +294,7 @@ if acquisition_rate == "slow"
       'R2= ' num2str(c)];
     text(1,1,polyfit_str,'FontSize',18);
 
-    saveas(f1,strcat(fnm, "_fig", ".tif"));
+%     saveas(f1,strcat(fnm, "_fig", ".tif"));
 
     fprintf('The residence time is %d before correction of one-component fitting.\n', x(3));
     fprintf('The true residence time is %d of one component fitting after correction.\n', TrueR);
@@ -328,7 +303,8 @@ if acquisition_rate == "slow"
 
     clear tracklength;
 
-    full_row = {fnm TrueR2 c a};
+%     full_row = {fnm TrueR2 c a};
+    full_row = {Filenames{k} TrueR2 c a};
     df = full_row;
     if k == 1
       df_final = df;
@@ -371,8 +347,10 @@ if runParallel
 
     % trackedPar to tracks
     tracks = struct('data', []);
+    tracksE = struct('data', []);
     for n = 1 : numel(trackedPar)
       tracks(n) = struct('data', [trackedPar(n).TimeStamp, trackedPar(n).xy]);
+      tracksE(n) = struct('data', [trackedPar(n).TimeStamp, trackedPar(n).xy, trackedPar(n).Frame, repelem(n, size(trackedPar(n).xy, 1))']);
     end
 
     rows_to_remove = [];
@@ -382,6 +360,7 @@ if runParallel
       end
     end
     tracks(rows_to_remove) = [];
+    tracksE(rows_to_remove) = [];
 
     msd = computeMSD(tracks, tol);
     lfit = fitMSD(msd, clip_factor, analysis_type);
@@ -396,10 +375,34 @@ if runParallel
     E = lfit.a(lfit.a>0);
 
     tracks = tracks(lfit.a>0);
+    tracksE = tracksE(lfit.a>0);
     msd = msd(lfit.a>0);
     dataTraj = [];
     dataTrack = [];
     dataAngle = [];
+
+    % BG
+    bgExist = strcmp(Filenames{iter}, fgFiles);
+    if sum(bgExist) == 1
+      dapiStack = tiffread([input_path, bgFiles{bgExist == 1}, '.tif']);
+      tracksE = cell2mat(reshape(struct2cell(tracksE), [], 1)); % time (s), x (pixel), y (pixel), frame, traj, intensity, dapiRegion
+      tracksE(:, 2:3) = round(tracksE(:, 2:3) ./ impars.PixelSize);
+      uFrame = unique(tracksE(:, 4));
+      for n = 1 : length(uFrame)
+        dapi = dapiStack(uFrame(n)).data;
+        dapiRegion = imquantize(dapi, multithresh(dapi, 4));
+        trajInFrame = find(tracksE(:, 4) == uFrame(n));
+        for m = 1 : length(trajInFrame)
+          tracksE(trajInFrame(m), 6) = dapi(tracksE(trajInFrame(m), 3) + 1, tracksE(trajInFrame(m), 2) + 1);
+          tracksE(trajInFrame(m), 7) = dapiRegion(tracksE(trajInFrame(m), 3) + 1, tracksE(trajInFrame(m), 2) + 1);
+        end
+      end
+    else
+      tracksE = cell2mat(reshape(struct2cell(tracksE), [], 1));
+    end
+    %
+
+    uTracks = unique(tracksE(:, 5));
     for n = 1 : numel(tracks)
       traj_size = size(tracks(n).data, 1);
       trackData = tracks(n).data;
@@ -412,7 +415,12 @@ if runParallel
       dataAngle = [dataAngle; n, histcounts(Theta, deg2rad([0:10:180]))];
       dataTraj = [dataTraj; convertCharsToStrings(Filenames{iter}), n, traj_size, mean(msd{n}(1 : traj_size, 2), 'omitnan'), D(n), tracks(n).data(1,1), tracks(n).data(end,1)];
       %     dataTrack = [dataTrack; repelem(n, traj_size)', tracks(n).data, msd{n}(1 : traj_size, 2)];
-      dataTrack = [dataTrack; repelem(n, traj_size)', tracks(n).data, msd{n}(1 : traj_size, 2), [0, dist(2:traj_size)]', [zeros(traj_size - length(Theta), 1); Theta]];
+%       dataTrack = [dataTrack; repelem(n, traj_size)', tracks(n).data, msd{n}(1 : traj_size, 2), [0, dist(2:traj_size)]', [zeros(traj_size - length(Theta), 1); Theta]];
+      if sum(bgExist) == 1
+        dataTrack = [dataTrack; repelem(n, traj_size)', tracks(n).data(:, 1:3), msd{n}(1 : traj_size, 2), [0, dist(2:traj_size)]', [zeros(traj_size - length(Theta), 1); Theta], tracksE(tracksE(:, 5) == uTracks(n), 6:7)];
+      else
+        dataTrack = [dataTrack; repelem(n, traj_size)', tracks(n).data(:, 1:3), msd{n}(1 : traj_size, 2), [0, dist(2:traj_size)]', [zeros(traj_size - length(Theta), 1); Theta], repelem(0, traj_size)', repelem(0, traj_size)'];
+      end
     end
     dataTraj = cellstr(dataTraj);
     parsaveangle([output_path, Filenames{iter}], dataAngle, dataTraj, dataTrack, E, msd)
@@ -486,8 +494,10 @@ else
 
     % trackedPar to tracks
     tracks = struct('data', []);
+    tracksE = struct('data', []);
     for n = 1 : numel(trackedPar)
       tracks(n) = struct('data', [trackedPar(n).TimeStamp, trackedPar(n).xy]);
+      tracksE(n) = struct('data', [trackedPar(n).TimeStamp, trackedPar(n).xy, trackedPar(n).Frame, repelem(n, size(trackedPar(n).xy, 1))']);
     end
 
     rows_to_remove = [];
@@ -497,6 +507,7 @@ else
       end
     end
     tracks(rows_to_remove) = [];
+    tracksE(rows_to_remove) = [];
 
     msd = computeMSD(tracks, tol);
     lfit = fitMSD(msd, clip_factor, analysis_type);
@@ -511,10 +522,34 @@ else
     E = lfit.a(lfit.a>0);
 
     tracks = tracks(lfit.a>0);
+    tracksE = tracksE(lfit.a>0);
     msd = msd(lfit.a>0);
     dataTraj = [];
     dataTrack = [];
     dataAngle = [];
+
+    % BG
+    bgExist = strcmp(Filenames{iter}, fgFiles);
+    if sum(bgExist) == 1
+      dapiStack = tiffread([input_path, bgFiles{bgExist == 1}, '.tif']);
+      tracksE = cell2mat(reshape(struct2cell(tracksE), [], 1)); % time (s), x (pixel), y (pixel), frame, traj, intensity, dapiRegion
+      tracksE(:, 2:3) = round(tracksE(:, 2:3) ./ impars.PixelSize);
+      uFrame = unique(tracksE(:, 4));
+      for n = 1 : length(uFrame)
+        dapi = dapiStack(uFrame(n)).data;
+        dapiRegion = imquantize(dapi, multithresh(dapi, 4));
+        trajInFrame = find(tracksE(:, 4) == uFrame(n));
+        for m = 1 : length(trajInFrame)
+          tracksE(trajInFrame(m), 6) = dapi(tracksE(trajInFrame(m), 3) + 1, tracksE(trajInFrame(m), 2) + 1);
+          tracksE(trajInFrame(m), 7) = dapiRegion(tracksE(trajInFrame(m), 3) + 1, tracksE(trajInFrame(m), 2) + 1);
+        end
+      end
+    else
+      tracksE = cell2mat(reshape(struct2cell(tracksE), [], 1));
+    end
+    %
+
+    uTracks = unique(tracksE(:, 5));
     for n = 1 : numel(tracks)
       traj_size = size(tracks(n).data, 1);
       trackData = tracks(n).data;
@@ -527,7 +562,11 @@ else
       dataAngle = [dataAngle; n, histcounts(Theta, deg2rad([0:10:180]))];
       dataTraj = [dataTraj; convertCharsToStrings(Filenames{iter}), n, traj_size, mean(msd{n}(1 : traj_size, 2), 'omitnan'), D(n), tracks(n).data(1,1), tracks(n).data(end,1)];
       %     dataTrack = [dataTrack; repelem(n, traj_size)', tracks(n).data, msd{n}(1 : traj_size, 2)];
-      dataTrack = [dataTrack; repelem(n, traj_size)', tracks(n).data, msd{n}(1 : traj_size, 2), [0, dist(2:traj_size)]', [zeros(traj_size - length(Theta), 1); Theta]];
+      if sum(bgExist) == 1
+        dataTrack = [dataTrack; repelem(n, traj_size)', tracks(n).data(:, 1:3), msd{n}(1 : traj_size, 2), [0, dist(2:traj_size)]', [zeros(traj_size - length(Theta), 1); Theta], tracksE(tracksE(:, 5) == uTracks(n), 6:7)];
+      else
+        dataTrack = [dataTrack; repelem(n, traj_size)', tracks(n).data(:, 1:3), msd{n}(1 : traj_size, 2), [0, dist(2:traj_size)]', [zeros(traj_size - length(Theta), 1); Theta], repelem(0, traj_size)', repelem(0, traj_size)'];
+      end
     end
     dataTraj = cellstr(dataTraj);
     save([output_path, Filenames{iter}, '_dataAngle.mat'], 'dataAngle');
