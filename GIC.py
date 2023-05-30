@@ -197,6 +197,12 @@ class CheckableComboBox(QComboBox):
                 res.append(self.model().item(i).data())
         return res
 
+    def checkAll(self):
+        # Check all items in the list
+        res = []
+        for i in range(self.model().rowCount()):
+            self.model().item(i).setCheckState(Qt.Checked)
+
 class DStatistic(object):
     """
     Abstract Base Class for distance statistics.
@@ -852,12 +858,16 @@ class Controller:
         self._view.comboFileList.model().clear()
         self._view.comboFileList.addItems(set(data['filename']))
         self._view.comboFileList.updateText()
+        # Ticking all files
+        self._view.comboMutation.checkAll()
 
     def comboFileListUpdate(self):
         data = self._model.updateFilelist(self._view.comboAcquisitionRate.currentData(), self._view.comboMutation.currentData())
         self._view.comboFileList.model().clear()
         self._view.comboFileList.addItems(set(data['filename']))
         self._view.comboFileList.updateText()
+        # Ticking all files
+        self._view.comboFileList.checkAll()
 
     def sidebarFileList(self):
         data = self._model.getSelectedFiles(self._view.comboAcquisitionRate.currentData(), self._view.comboMutation.currentData(), self._view.comboFileList.currentData(), "FileList")
@@ -868,8 +878,6 @@ class Controller:
         jumpNumber = int(self._view.jumpNumberDrawBox.text())
         trajLength = int(self._view.minTrajLength.text())
         selectionFile = self._view.comboFileList.currentData()
-        if selectionFile == []:
-            selectionFile = [self._view.comboFileList.itemText(i) for i in range(self._view.comboFileList.count())]
         if len(selectionFile) > 1:
             self._view.trajectory_browser.setHtml("")
         else:
@@ -887,8 +895,6 @@ class Controller:
 
     def trajectoryData(self):
         selectionFile = self._view.comboFileList.currentData()
-        if selectionFile == []:
-            selectionFile = [self._view.comboFileList.itemText(i) for i in range(self._view.comboFileList.count())]
         data = self._model.getTrajectoryDataFiles(selectionFile)
         boxData = data >> group_by(X.filename, X.mutation) >> summarize(TrajNumber = summary_functions.n_distinct(X.trajID))
         boxFigure = px.box(boxData, y = "TrajNumber", color = "mutation", points = "all", hover_name = "filename", labels = {"mutation": "Condition"})
@@ -901,8 +907,6 @@ class Controller:
 
     def diffusionPlotUpdate(self):
         selectionFile = self._view.comboFileList.currentData()
-        if selectionFile == []:
-            selectionFile = [self._view.comboFileList.itemText(i) for i in range(self._view.comboFileList.count())]
         if self._view.diffusionErrorVariation.isChecked() == True:
             errorView = 0
         elif self._view.diffusionErrorSTD.isChecked() == True:
@@ -926,7 +930,7 @@ class Controller:
         self._view.diffusionTrack3ParBox_browser.setHtml(self._view.loadingHtml)
         selectionFile = self._view.comboFileList.currentData()
         if selectionFile == []:
-            selectionFile = [self._view.comboFileList.itemText(i) for i in range(self._view.comboFileList.count())]
+            return
         # data = self._model.getJumpDistanceData(selectionFile)
         self.produceJumpDistanceFigure.terminate()
         self.produceJumpDistanceFigure.update(selectionFile, self._view.jumpDistanceConsidered.value())
@@ -966,7 +970,7 @@ class Controller:
     def jumpDistanceDataSave(self):
         selectionFile = self._view.comboFileList.currentData()
         if selectionFile == []:
-            selectionFile = [self._view.comboFileList.itemText(i) for i in range(self._view.comboFileList.count())]
+            return
         # data = self._model.getJumpDistanceData(selectionFile) #TODO:
         twoParBoxData, threeParBoxData = self._model.getJumpDistanceBoxData(selectionFile)
         twoParBoxData.to_csv("Two_Parameter_Fit.csv")
@@ -980,7 +984,7 @@ class Controller:
         self._view.trackAngleBox_browser.setHtml(self._view.loadingHtml)
         selectionFile = self._view.comboFileList.currentData()
         if selectionFile == []:
-            selectionFile = [self._view.comboFileList.itemText(i) for i in range(self._view.comboFileList.count())]
+            return
         allMutation = [self._view.comboMutation.itemText(i) for i in range(self._view.comboMutation.count())]
         allFile = [self._view.comboFileList.itemText(i) for i in range(self._view.comboFileList.count())]
         if (((self._view.comboMutation.currentData() == []) or (self._view.comboMutation.currentData() == allMutation)) and (allFile == selectionFile)):
@@ -1007,7 +1011,7 @@ class Controller:
     def angleDataSave(self):
         selectionFile = self._view.comboFileList.currentData()
         if selectionFile == []:
-            selectionFile = [self._view.comboFileList.itemText(i) for i in range(self._view.comboFileList.count())]
+            return
         selectionAngle = self._view.angleSelection.currentData()
         if selectionAngle == []:
             selectionAngle = [self._view.angleSelection.itemText(i) for i in range(self._view.angleSelection.count())]
@@ -1020,7 +1024,7 @@ class Controller:
     def dOTMapUpdate(self):
         selectionFile = self._view.comboFileList.currentData()
         if selectionFile == []:
-            selectionFile = [self._view.comboFileList.itemText(i) for i in range(self._view.comboFileList.count())]
+            return
         dOTRegions = [float(i) for i in self._view.dOTRegionArea.text().split(",")]
         # data = self._model.getDOTFiles(selectionFile)
         # tableData, boxData, figure = self._model.getDOTData(data, dOTRegions, self._view.dOTMinTrajLength.value())
@@ -1068,7 +1072,7 @@ class Controller:
         self._view.heatMapRipley.setHtml(self._view.loadingHtml)
         selectionFile = self._view.comboFileList.currentData()
         if selectionFile == []:
-            selectionFile = [self._view.comboFileList.itemText(i) for i in range(self._view.comboFileList.count())]
+            return
 
         self.produceHeatMapFigure.terminate()
         self.produceHeatMapFigure.update(selectionFile)
@@ -1082,7 +1086,7 @@ class Controller:
     def dwellTimeUpdate(self):
         selectionFile = self._view.comboFileList.currentData()
         if selectionFile == []:
-            selectionFile = [self._view.comboFileList.itemText(i) for i in range(self._view.comboFileList.count())]
+            return
         boxFigure, densityFigure, pieFigure = self._model.produceDwellTimeFigures(selectionFile)
         if boxFigure != [None]:
             self._view.dwellBox_browser.setHtml(boxFigure.to_html(include_plotlyjs='cdn'))
@@ -1092,6 +1096,77 @@ class Controller:
             self._view.dwellBox_browser.setHtml("")
             self._view.dwellDensity_browser.setHtml("")
             self._view.dwellPie_browser.setHtml("")
+
+    def chromatinTabUpdate(self):
+        selectionFile = self._view.comboFileList.currentData()
+        if selectionFile == []:
+            return
+        data = self._model.getChromatinData(selectionFile)
+        fastData = data.loc[data.loc[:, "acquisition_rate"] == "fast", ]
+        fastData.loc[:, "AC"] = np.log2((fastData.loc[:, "A1"] + fastData.loc[:, "A2"] + fastData.loc[:, "A3"]).div(fastData.loc[:, "A16"] + fastData.loc[:, "A17"] + fastData.loc[:, "A18"]))
+        fastData = fastData[~fastData.isin([np.nan, np.inf, -np.inf]).any(1)]
+        # fastData.replace(np.inf, 2, inplace = True)
+        # fastData.replace(-np.inf, -2, inplace = True)
+
+        boundaryD = 0
+        boundIndex = fastData.groupby(["mutation", "filename", "trajID"]).apply(lambda fastData, x, boundaryD: np.mean(fastData[x]) <= boundaryD, "D", boundaryD).reset_index().loc[:, 0] == True
+        diffuIndex = fastData.groupby(["mutation", "filename", "trajID"]).apply(lambda fastData, x, boundaryD: np.mean(fastData[x]) > boundaryD, "D", boundaryD).reset_index().loc[:, 0] == True
+        trajBG = fastData.groupby(["mutation", "filename", "trajID"]).apply(lambda fastData, x: np.round(np.mean(fastData[x])), "bgRegion").reset_index()
+        # Number of traj in each bgRegion
+        trajCount = fastData.groupby(["mutation", "filename", "trajID"]).apply(lambda fastData, x: np.round(np.mean(fastData[x])), "bgRegion").reset_index().groupby(["mutation", "filename", 0]).count().reset_index()
+        trajCount.rename(columns = {0 : "bgRegion"}, inplace = True)
+        trajNumFig = px.box(trajCount, x = "bgRegion", y = "trajID", color = "mutation", points = "all", labels = {"bgRegion": "Background Intensity", "trajID": "Number of Trajectories"}, hover_name = "filename", title = "Trajectories Number by Region")
+        # Number of bound traj in each bgRegion
+        trajBound = fastData.groupby(["mutation", "filename", "trajID"]).apply(lambda fastData, x: np.round(np.mean(fastData[x])), "bgRegion").reset_index().loc[boundIndex, :].groupby(["mutation", "filename", 0]).count().reset_index()
+        trajBound.rename(columns = {0: "bgRegion"}, inplace = True)
+        bn2bgFig = px.box(trajBound, x = "bgRegion", y = "trajID", color = "mutation", points = "all", labels = {"trajID": "Number of Trajectories"}, hover_name = "filename", title = "Bound Trajectories Number by Region")
+        # Number of mobile traj in each bgRegion
+        trajDiffu = fastData.groupby(["mutation", "filename", "trajID"]).apply(lambda fastData, x: np.round(np.mean(fastData[x])), "bgRegion").reset_index().loc[diffuIndex, :].groupby(["mutation", "filename", 0]).count().reset_index()
+        trajDiffu.rename(columns = {0: "bgRegion"}, inplace = True)
+        df2bgFig = px.box(trajDiffu, x = "bgRegion", y = "trajID", color = "mutation", points = "all", labels = {"trajID": "Number of Trajectories"}, hover_name = "filename", title = "Mobile Trajectories Number by Region")
+        # Mean of all trajectories' AC in each cell is used to plot box plot
+        trajAC = fastData.groupby(["mutation", "filename", "trajID"]).apply(lambda fastData, x: np.mean(fastData[x]), "AC").reset_index()
+        trajAC.loc[:, "bgRegion"] = trajBG.loc[:, 0] # AC of each trajectory in each bgRegion
+        fileAC = trajAC.groupby(["mutation", "filename", "bgRegion"]).apply(lambda trajAC, x: np.mean(trajAC[x]), 0).reset_index()
+        fileAC.rename(columns = {0: "AC"}, inplace = True)
+        ac2bgFig = px.box(fileAC, x = "bgRegion", y = "AC", color = "mutation", points = "all", labels = {"bgRegion": "Background Intensity", "AC": "Asymmetry Coefficient"}, hover_name = "filename", title = "Asymmetry Coefficient with respect to Background Intensity Region")
+        # Percentage of bound traj in each region
+        trajCount.loc[:, "trajID"].div(trajBound.loc[:, "trajID"])
+
+        # fig = px.box(trajCount, x = 0, y = "trajID", color = "mutation", points = "all", labels = {"trajID": "Number of Trajectories"}, hover_name = "filename", title = "Trajectories Number by Region")
+        self._view.chromatinAC_browser.setHtml(ac2bgFig.to_html(include_plotlyjs='cdn'))
+        self._view.chromatinTraj_browser.setHtml(trajNumFig.to_html(include_plotlyjs='cdn'))
+        self._view.chromatinFast_browser.setHtml(df2bgFig.to_html(include_plotlyjs='cdn'))
+        self._view.chromatinSlow_browser.setHtml(bn2bgFig.to_html(include_plotlyjs='cdn'))
+        
+        # fig = go.Figure(go.Sunburst(
+        #     labels = [" ", "Low Intensity", "Short Dwell (l)", "Long Dwell (l)", "Mid Intensity", "Short Dwell (m)", "Long Dwell (m)", "High Intensity", "Short Dwell (h)", "Long Dwell (h)"],
+        #     parents = ["", " ", "Low Intensity", "Low Intensity", " ", "Mid Intensity", "Mid Intensity", " ", "High Intensity", "High Intensity"],
+        #     values = [0, 0, lIntFinal[0], lIntFinal[1], 0, mIntFinal[0], mIntFinal[1], 0, hIntFinal[0], hIntFinal[1]]
+        # ))
+        # fig.show()["filename", "trajID"]).agg({"D": np.mean}).reset_index()
+            # subData.groupby(["filename", "trajID"]).apply(lambda subData, A1, A2: subData[A1] + subData[A2], "A1", "A2").reset_index()
+            # fileList = list(dict.fromkeys(subData.loc[:, "filename"]))
+            # for m in range(len(fileList)):
+            #     fileData = subData.loc[subData.loc[:, "filename"] == fileList[m], ]
+            #     # vectorised
+            #     fileData.groupby("trajID").agg({"D": [np.mean]})
+                
+            #     # for loop
+            #     trajList = list(dict.fromkeys(fileData.loc[:, "trajID"]))
+            #     for p in range(len(trajList)):
+            #         p
+
+        # fastData.groupby("bgRegion").size().reset_index(name = "Counts")
+
+        # slowData = 1
+        # # Check whether the traj cross regions
+        # fastData.groupby(["mutation", "filename", "trajID"]).bgRegion.nunique().eq(1)
+
+        # mutList = list(dict.fromkeys(fastData.loc[:, "mutation"]))
+        # for n in range(len(mutList)):
+        #     subData = fastData.loc[fastData.loc[:, "mutation"] == mutList[n], ]
+        return
 
     def tabsUpdate(self):
         tabIndex = self._view.tabs.currentIndex()
@@ -1114,11 +1189,11 @@ class Controller:
             self.heatMapUpdate()
         elif tabIndex == 6: # Dwell time
             self.dwellTimeUpdate()
+        elif tabIndex == 7: # Chromatin tab
+            self.chromatinTabUpdate()
 
     def deleteFiles(self):
         selectionFile = self._view.comboFileList.currentData()
-        if selectionFile == []:
-            selectionFile = [self._view.comboFileList.itemText(i) for i in range(self._view.comboFileList.count())]
         with sqlite3.connect('database.db') as conn:
             if len(selectionFile) > 1:
                 data = pd.read_sql_query(f"SELECT TrackList.trajID FROM TrackList INNER JOIN TrajectoryList ON TrackList.trajID = TrajectoryList.trajID AND TrajectoryList.filename IN {tuple(selectionFile)}", conn)
@@ -1315,6 +1390,7 @@ class Controller:
         # Get data from database
         with sqlite3.connect('database.db') as conn:
             try:
+                # data = pd.read_sql_query("select * from TrackList", conn)
                 df = pd.read_sql_query("select * from FileList", conn)
                 self._view.textEdit.setText(pd.read_sql_query("select text from Settings", conn).loc[0, "text"])
                 dataExist = True
@@ -1356,6 +1432,10 @@ class Controller:
             self._view.comboMutation.updateText()
             self._view.comboFileList.updateText()
             self._view.angleSelection.updateText()
+
+            self._view.comboAcquisitionRate.checkAll()
+            self._view.comboMutation.checkAll()
+            self._view.comboFileList.checkAll()
 
             if os.path.exists("Settings.txt"):
                 try:
@@ -1402,7 +1482,7 @@ class Controller:
                     self._view.difLawWeight.setValue(float(self._view.uploadSettings.loc[0, "fastDifLaw"]))
                     self._view.parallelizationCores.setValue(int(self._view.uploadSettings.loc[0, "coreNum"]))
                     self._view.bleachRate.setValue(float(self._view.uploadSettings.loc[0, "bleachRate"]))
-
+    
 class Model:
     def __init__(self):
         1
@@ -1420,7 +1500,9 @@ class Model:
                                   "y": data['dataTrack'][:, 3].astype(float),
                                   "msd": data['dataTrack'][:, 4].astype(float),
                                   "distance": data['dataTrack'][:, 5].astype(float),
-                                  "angle": data['dataTrack'][:, 6].astype(float)
+                                  "angle": data['dataTrack'][:, 6].astype(float),
+                                  "bgIntensity": data['dataTrack'][:, 7].astype(float),
+                                  "bgRegion": data['dataTrack'][:, 8].astype(float)
                                  }
                                 )
         trajIDs = list(set(dataTrack["trajID"].to_numpy().astype(str)))
@@ -1428,9 +1510,10 @@ class Model:
         for m in range(len(trajIDs)):
             dataSubset = dataTrack.loc[dataTrack["trajID"] == trajIDs[m]]
             points = dataSubset.to_numpy()[:, (2,3)].astype(float)
-            hull = chull(points)
-            hullpoints = points[hull.vertices, :]
-            hdist = cdist(hullpoints, hullpoints, metric='euclidean')
+            # hull = chull(points)
+            # hullpoints = points[hull.vertices, :]
+            # hdist = cdist(hullpoints, hullpoints, metric='euclidean')
+            hdist = cdist(points, points, metric='euclidean')
             distances = pd.concat([distances, pd.DataFrame({"meanX": dataSubset['x'].mean(), "meanY": dataSubset['y'].mean(), "maxDistance": hdist.max(), "meanDistance": hdist[0,:][1:].mean(), "medianDistance": np.median(hdist[0,:][1:])}, index = [m])], axis = 0)
         data = scipy.io.loadmat(dataDir + file_name + "_dataTraj.mat")
         dataTraj = pd.DataFrame({"filename": [file_name] * len(data['dataTraj'][:, 0]),
@@ -1475,9 +1558,6 @@ class Model:
                                         "iNA": uploadParameters.loc["iNA", "impars"], "psfStd": uploadParameters.loc["psfStd", "impars"],
                                         "wn": uploadParameters.loc["wn", "locpars"], "errorRate": uploadParameters.loc["errorRate", "locpars"],
                                         "dfltnLoops": uploadParameters.loc["dfltnLoops", "locpars"], "minInt": uploadParameters.loc["minInt", "locpars"],
-                                        "maxOptimIter": uploadParameters.loc["maxOptimIter", "locpars"], "termTol": uploadParameters.loc["termTol", "locpars"],
-                                        "isRadiusTol": uploadParameters.loc["isRadiusTol", "locpars"], "radiusTol": uploadParameters.loc["radiusTol", "locpars"],
-                                        "posTol": uploadParameters.loc["posTol", "locpars"],
                                         "optim_MaxIter": uploadParameters.loc["optim", "locpars"][0],
                                         "optim_termTol": uploadParameters.loc["optim", "locpars"][1],
                                         "optim_isRadTol": uploadParameters.loc["optim", "locpars"][2],
@@ -1590,8 +1670,7 @@ class Model:
 
     def updateMutationFilelist(self, selectionRate):
         if selectionRate == []:
-            with sqlite3.connect('database.db') as conn:
-                data = pd.read_sql_query("select * from FileList", conn)
+            data = pd.DataFrame({"filename": [], "mutation": []})
         else:
             with sqlite3.connect('database.db') as conn:
                 if len(selectionRate) > 1:
@@ -1601,143 +1680,46 @@ class Model:
         return data
 
     def updateFilelist(self, selectionRate, selectionMutation):
-        if selectionRate == []:
-            if selectionMutation == []:
-                with sqlite3.connect('database.db') as conn:
-                    data = pd.read_sql_query("select * from FileList", conn)
-            else:
-                # data = pd.DataFrame(data = [])
-                with sqlite3.connect('database.db') as conn:
-                    if len(selectionMutation) > 1:
-                        data = pd.read_sql_query(f"select * from FileList where mutation IN {tuple(selectionMutation)}", conn)
-                    else:
-                        data = pd.read_sql_query("select * from FileList where mutation = :selectionMutation", conn, params = {"selectionMutation": selectionMutation[0]})
-                    # for n in range(len(selectionMutation)):
-                    #     data = data.append(pd.read_sql_query("select * from FileList where mutation = :selectionMutation", conn, params = {"selectionMutation": selectionMutation[n]}))
+        if selectionMutation == []:
+            data = pd.DataFrame({"filename": [], "mutation": []})
         else:
-            # data = pd.DataFrame(data = [])
-            if selectionMutation == []:
-                with sqlite3.connect('database.db') as conn:
-                    if len(selectionRate) > 1:
-                        data = pd.read_sql_query(f"select * from FileList where acquisition_rate IN {tuple(selectionRate)}", conn)
+            with sqlite3.connect('database.db') as conn:
+                if len(selectionRate) > 1:
+                    if len(selectionMutation) > 1:
+                        data = pd.read_sql_query(f"select * from FileList where acquisition_rate IN {tuple(selectionRate)} AND mutation IN {tuple(selectionMutation)}", conn)
                     else:
-                        data = pd.read_sql_query("select * from FileList where acquisition_rate = :selectionRate", conn, params = {"selectionRate": selectionRate[0]})
-                    # for n in range(len(selectionRate)):
-                    #     data = data.append(pd.read_sql_query("select * from FileList where acquisition_rate = :selectionRate", conn, params = {"selectionRate": selectionRate[n]}))
-            else:
-                # data = pd.DataFrame(data = [])
-                with sqlite3.connect('database.db') as conn:
-                    if len(selectionRate) > 1:
-                        if len(selectionMutation) > 1:
-                            data = pd.read_sql_query(f"select * from FileList where acquisition_rate IN {tuple(selectionRate)} AND mutation IN {tuple(selectionMutation)}", conn)
-                        else:
-                            data = pd.read_sql_query(f"select * from FileList where acquisition_rate IN {tuple(selectionRate)} AND mutation = :selectionMutation", conn, params = {"selectionMutation": selectionMutation[0]})
+                        data = pd.read_sql_query(f"select * from FileList where acquisition_rate IN {tuple(selectionRate)} AND mutation = :selectionMutation", conn, params = {"selectionMutation": selectionMutation[0]})
+                else:
+                    if len(selectionMutation) > 1:
+                        data = pd.read_sql_query(f"select * from FileList where acquisition_rate = :selectionRate AND mutation IN {tuple(selectionMutation)}", conn, params = {"selectionRate": selectionRate[0]})
                     else:
-                        if len(selectionMutation) > 1:
-                            data = pd.read_sql_query(f"select * from FileList where acquisition_rate = :selectionRate AND mutation IN {tuple(selectionMutation)}", conn, params = {"selectionRate": selectionRate[0]})
-                        else:
-                            data = pd.read_sql_query("select * from FileList where acquisition_rate = :selectionRate AND mutation = :selectionMutation", conn, params = {"selectionRate": selectionRate[0], "selectionMutation": selectionMutation[0]})
-                    # for n in range(len(selectionRate)):
-                    #     for m in range(len(selectionMutation)):
-                    #         data = data.append(pd.read_sql_query("select * from FileList where acquisition_rate = :selectionRate AND mutation = :selectionMutation", conn, params = {"selectionRate": selectionRate[n], "selectionMutation": selectionMutation[m]}))
+                        data = pd.read_sql_query("select * from FileList where acquisition_rate = :selectionRate AND mutation = :selectionMutation", conn, params = {"selectionRate": selectionRate[0], "selectionMutation": selectionMutation[0]})
         return data
 
     def getSelectedFiles(self, selectionRate, selectionMutation, selectionFile, table):
-        if selectionRate == []:
-            if selectionMutation == []:
-                if selectionFile == []:
-                    # All data
-                    with sqlite3.connect('database.db') as conn:
-                        data = pd.read_sql_query(f"select * from {table}", conn)
+        with sqlite3.connect('database.db') as conn:
+            if len(selectionRate) > 1:
+                if len(selectionMutation) > 1:
+                    if len(selectionFile) > 1:
+                        data = pd.read_sql_query(f"select * from {table} where acquisition_rate IN {tuple(selectionRate)} AND mutation IN {tuple(selectionMutation)} AND filename IN {tuple(selectionFile)}", conn)
+                    else:
+                        data = pd.read_sql_query(f"select * from {table} where acquisition_rate IN {tuple(selectionRate)} AND mutation IN {tuple(selectionMutation)} AND filename = :selectionFile", conn, params = {"selectionFile": selectionFile[0]})
                 else:
-                    # All rate, all condition, some files
-                    with sqlite3.connect('database.db') as conn:
-                        if len(selectionFile) > 1:
-                            data = pd.read_sql_query(f"select * from {table} where filename IN {tuple(selectionFile)}", conn)
-                        else:
-                            data = pd.read_sql_query(f"select * from {table} where filename = :selectionFile", conn, params = {"selectionFile": selectionFile[0]})
+                    if len(selectionFile) > 1:
+                        data = pd.read_sql_query(f"select * from {table} where acquisition_rate IN {tuple(selectionRate)} AND mutation = :selectionMutation AND filename IN {tuple(selectionFile)}", conn, params = {"selectionMutation": selectionMutation[0]})
+                    else:
+                        data = pd.read_sql_query(f"select * from {table} where acquisition_rate IN {tuple(selectionRate)} AND mutation = :selectionMutation AND filename = :selectionFile", conn, params = {"selectionMutation": selectionMutation[0], "selectionFile": selectionFile[0]})
             else:
-                if selectionFile == []:
-                    # All rate, some condition, all files
-                    with sqlite3.connect('database.db') as conn:
-                        if len(selectionMutation) > 1:
-                            data = pd.read_sql_query(f"select * from {table} where mutation IN {tuple(selectionMutation)}", conn)
-                        else:
-                            data = pd.read_sql_query(f"select * from {table} where mutation = :selectionMutation", conn, params = {"selectionMutation": selectionMutation[0]})
+                if len(selectionMutation) > 1:
+                    if len(selectionFile) > 1:
+                        data = pd.read_sql_query(f"select * from {table} where acquisition_rate = :selectionRate AND mutation IN {tuple(selectionMutation)} AND filename IN {tuple(selectionFile)}", conn, params = {"selectionRate": selectionRate[0]})
+                    else:
+                        data = pd.read_sql_query(f"select * from {table} where acquisition_rate = :selectionRate AND mutation IN {tuple(selectionMutation)} AND filename = :selectionFile", conn, params = {"selectionRate": selectionRate[0], "selectionFile": selectionFile[0]})
                 else:
-                    # All rate, some condition, some files
-                    with sqlite3.connect('database.db') as conn:
-                        if len(selectionMutation) > 1:
-                            if len(selectionFile) > 1:
-                                data = pd.read_sql_query(f"select * from {table} where mutation IN {tuple(selectionMutation)} AND filename IN {tuple(selectionFile)}", conn)
-                            else:
-                                data = pd.read_sql_query(f"select * from {table} where mutation IN {tuple(selectionMutation)} AND filename = :selectionFile", conn, params = {"selectionFile": selectionFile[0]})
-                        else:
-                            if len(selectionFile) > 1:
-                                data = pd.read_sql_query(f"select * from {table} where mutation = :selectionMutation AND filename IN {tuple(selectionFile)}", conn, params = {"selectionMutation": selectionMutation[0]})
-                            else:
-                                data = pd.read_sql_query(f"select * from {table} where mutation = :selectionMutation AND filename = :selectionFile", conn, params = {"selectionMutation": selectionMutation[0], "selectionFile": selectionFile[0]})
-        else:
-            if selectionMutation == []:
-                if selectionFile == []:
-                    # Some rate, all condition, all files
-                    with sqlite3.connect('database.db') as conn:
-                        if len(selectionRate) > 1:
-                            data = pd.read_sql_query(f"select * from {table} where acquisition_rate IN {tuple(selectionRate)}", conn)
-                        else:
-                            data = pd.read_sql_query(f"select * from {table} where acquisition_rate = :selectionRate", conn, params = {"selectionRate": selectionRate[0]})
-                else:
-                    # Some rate, all condition, some files
-                    with sqlite3.connect('database.db') as conn:
-                        if len(selectionRate) > 1:
-                            if len(selectionFile) > 1:
-                                data = pd.read_sql_query(f"select * from {table} where acquisition_rate IN {tuple(selectionRate)} AND filename IN {tuple(selectionFile)}", conn)
-                            else:
-                                data = pd.read_sql_query(f"select * from {table} where acquisition_rate IN {tuple(selectionRate)} AND filename = :selectionFile", conn, params = {"selectionFile": selectionFile[0]})
-                        else:
-                            if len(selectionFile) > 1:
-                                data = pd.read_sql_query(f"select * from {table} where acquisition_rate = :selectionRate AND filename IN {tuple(selectionFile)}", conn, params = {"selectionRate": selectionRate[0]})
-                            else:
-                                data = pd.read_sql_query(f"select * from {table} where acquisition_rate = :selectionRate AND filename = :selectionFile", conn, params = {"selectionRate": selectionRate[0], "selectionFile": selectionFile[0]})
-            else:
-                if selectionFile == []:
-                    # Some rate, some condition, all files
-                    with sqlite3.connect('database.db') as conn:
-                        if len(selectionRate) > 1:
-                            if len(selectionMutation) > 1:
-                                data = pd.read_sql_query(f"select * from {table} where acquisition_rate IN {tuple(selectionRate)} AND mutation = {tuple(selectionMutation)}", conn)
-                            else:
-                                data = pd.read_sql_query(f"select * from {table} where acquisition_rate IN {tuple(selectionRate)} AND mutation = :selectionMutation", conn, params = {"selectionMutation": selectionMutation[0]})
-                        else:
-                            if len(selectionMutation) > 1:
-                                data = pd.read_sql_query(f"select * from {table} where acquisition_rate = :selectionRate AND mutation IN {tuple(selectionMutation)}", conn, params = {"selectionRate": selectionRate[0]})
-                            else:
-                                data = pd.read_sql_query(f"select * from {table} where acquisition_rate = :selectionRate AND mutation = :selectionMutation", conn, params = {"selectionRate": selectionRate[0], "selectionMutation": selectionMutation[0]})
-                else:
-                    # Some rate, some condition, some files
-                    with sqlite3.connect('database.db') as conn:
-                        if len(selectionRate) > 1:
-                            if len(selectionMutation) > 1:
-                                if len(selectionFile) > 1:
-                                    data = pd.read_sql_query(f"select * from {table} where acquisition_rate IN {tuple(selectionRate)} AND mutation IN {tuple(selectionMutation)} AND filename IN {tuple(selectionFile)}", conn)
-                                else:
-                                    data = pd.read_sql_query(f"select * from {table} where acquisition_rate IN {tuple(selectionRate)} AND mutation IN {tuple(selectionMutation)} AND filename = :selectionFile", conn, params = {"selectionFile": selectionFile[0]})
-                            else:
-                                if len(selectionFile) > 1:
-                                    data = pd.read_sql_query(f"select * from {table} where acquisition_rate IN {tuple(selectionRate)} AND mutation = :selectionMutation AND filename IN {tuple(selectionFile)}", conn, params = {"selectionMutation": selectionMutation[0]})
-                                else:
-                                    data = pd.read_sql_query(f"select * from {table} where acquisition_rate IN {tuple(selectionRate)} AND mutation = :selectionMutation AND filename = :selectionFile", conn, params = {"selectionMutation": selectionMutation[0], "selectionFile": selectionFile[0]})
-                        else:
-                            if len(selectionMutation) > 1:
-                                if len(selectionFile) > 1:
-                                    data = pd.read_sql_query(f"select * from {table} where acquisition_rate = :selectionRate AND mutation IN {tuple(selectionMutation)} AND filename IN {tuple(selectionFile)}", conn, params = {"selectionRate": selectionRate[0]})
-                                else:
-                                    data = pd.read_sql_query(f"select * from {table} where acquisition_rate = :selectionRate AND mutation IN {tuple(selectionMutation)} AND filename = :selectionFile", conn, params = {"selectionRate": selectionRate[0], "selectionFile": selectionFile[0]})
-                            else:
-                                if len(selectionFile) > 1:
-                                    data = pd.read_sql_query(f"select * from {table} where acquisition_rate = :selectionRate AND mutation = :selectionMutation AND filename IN {tuple(selectionFile)}", conn, params = {"selectionRate": selectionRate[0], "selectionMutation": selectionMutation[0]})
-                                else:
-                                    data = pd.read_sql_query(f"select * from {table} where acquisition_rate = :selectionRate AND mutation = :selectionMutation AND filename = :selectionFile", conn, params = {"selectionRate": selectionRate[0], "selectionMutation": selectionMutation[0], "selectionFile": selectionFile[0]})
+                    if len(selectionFile) > 1:
+                        data = pd.read_sql_query(f"select * from {table} where acquisition_rate = :selectionRate AND mutation = :selectionMutation AND filename IN {tuple(selectionFile)}", conn, params = {"selectionRate": selectionRate[0], "selectionMutation": selectionMutation[0]})
+                    else:
+                        data = pd.read_sql_query(f"select * from {table} where acquisition_rate = :selectionRate AND mutation = :selectionMutation AND filename = :selectionFile", conn, params = {"selectionRate": selectionRate[0], "selectionMutation": selectionMutation[0], "selectionFile": selectionFile[0]})
         return data
 
     def add_pvalue_annotation(self, fig, df, x_values, x_marks, y_mark, y_range, symbol=''):
@@ -1946,6 +1928,14 @@ class Model:
                 data = pd.read_sql_query(f"select FileList.filename, FileList.mutation, FileList.exposure_time, FileList.pixelSize, FileList.cellSize, TrajectoryList.trajID, TrajectoryList.traj_length from FileList INNER JOIN TrajectoryList ON FileList.filename = TrajectoryList.filename WHERE FileList.filename = :selectionFile", conn, params = {"selectionFile": selectionFile[0]})
         return data
 
+    def getChromatinData(self, selectionFile):
+        with sqlite3.connect('database.db') as conn:
+            if len(selectionFile) > 1:
+                data = pd.read_sql_query(f"select FileList.filename, FileList.mutation, FileList.acquisition_rate, FileList.twoParD1, FileList.twoParD2, FileList.threeParD1, FileList.threeParD2, FileList.threeParD3, TrajectoryList.trajID, TrajectoryList.traj_length, TrajectoryList.D, TrajectoryList.maxDistance, TrackList.Frame, TrackList.x, TrackList.y, TrackList.distance, TrackList.bgIntensity, TrackList.bgRegion, AngleList.A1, AngleList.A2, AngleList.A3, AngleList.A4, AngleList.A5, AngleList.A6, AngleList.A7, AngleList.A8, AngleList.A9, AngleList.A10, AngleList.A11, AngleList.A12, AngleList.A13, AngleList.A14, AngleList.A15, AngleList.A16, AngleList.A17, AngleList.A18 from FileList INNER JOIN TrajectoryList ON FileList.filename = TrajectoryList.filename INNER JOIN TrackList ON TrajectoryList.trajID = TrackList.trajID INNER JOIN AngleList ON TrackList.trajID = AngleList.trajID WHERE FileList.filename IN {tuple(selectionFile)}", conn)
+            else:
+                data = pd.read_sql_query(f"select FileList.filename, FileList.mutation, FileList.acquisition_rate, FileList.twoParD1, FileList.twoParD2, FileList.threeParD1, FileList.threeParD2, FileList.threeParD3, TrajectoryList.trajID, TrajectoryList.traj_length, TrajectoryList.D, TrajectoryList.maxDistance, TrackList.Frame, TrackList.x, TrackList.y, TrackList.distance, TrackList.bgIntensity, TrackList.bgRegion, AngleList.A1, AngleList.A2, AngleList.A3, AngleList.A4, AngleList.A5, AngleList.A6, AngleList.A7, AngleList.A8, AngleList.A9, AngleList.A10, AngleList.A11, AngleList.A12, AngleList.A13, AngleList.A14, AngleList.A15, AngleList.A16, AngleList.A17, AngleList.A18 from FileList INNER JOIN TrajectoryList ON FileList.filename = TrajectoryList.filename INNER JOIN TrackList ON TrajectoryList.trajID = TrackList.trajID INNER JOIN AngleList ON TrackList.trajID = AngleList.trajID WHERE FileList.filename = :selectionFile", conn, params = {"selectionFile": selectionFile[0]})
+        return data
+
     def produceDiffusionData(self, data, binSize, lowerLimit, upperLimit, errorView, boundaryValue):
         mutations = set(data["mutation"])
         mutations = list(mutations)
@@ -2077,11 +2067,30 @@ class Model:
                                             "A18": "170 - 180"})
         mutData["Base"] = 0
         mutData.loc[:, 1:19] = mutData.iloc[:, 1:19].divide(mutData.sum(1, numeric_only = True), axis = 0)
+        # Duplicating data for full circle
+        mutData.loc[:, "180 - 190"] = mutData.loc[:, "170 - 180"]
+        mutData.loc[:, "190 - 200"] = mutData.loc[:, "160 - 170"]
+        mutData.loc[:, "200 - 210"] = mutData.loc[:, "150 - 160"]
+        mutData.loc[:, "210 - 220"] = mutData.loc[:, "140 - 150"]
+        mutData.loc[:, "220 - 230"] = mutData.loc[:, "130 - 140"]
+        mutData.loc[:, "230 - 240"] = mutData.loc[:, "120 - 130"]
+        mutData.loc[:, "240 - 250"] = mutData.loc[:, "110 - 120"]
+        mutData.loc[:, "250 - 260"] = mutData.loc[:, "100 - 110"]
+        mutData.loc[:, "260 - 270"] = mutData.loc[:, "90 - 100"]
+        mutData.loc[:, "270 - 280"] = mutData.loc[:, "80 - 90"]
+        mutData.loc[:, "280 - 290"] = mutData.loc[:, "70 - 80"]
+        mutData.loc[:, "290 - 300"] = mutData.loc[:, "60 - 70"]
+        mutData.loc[:, "300 - 310"] = mutData.loc[:, "50 - 60"]
+        mutData.loc[:, "310 - 320"] = mutData.loc[:, "40 - 50"]
+        mutData.loc[:, "320 - 330"] = mutData.loc[:, "30 - 40"]
+        mutData.loc[:, "330 - 340"] = mutData.loc[:, "20 - 30"]
+        mutData.loc[:, "340 - 350"] = mutData.loc[:, "10 - 20"]
+        mutData.loc[:, "350 - 360"] = mutData.loc[:, "0 - 10"]
         mutData = mutData.melt(id_vars = ["mutation", "Base"], var_name = "Theta", value_name = "Counts")
         if viewAllData == True:
-            mutHist = px.bar_polar(mutData, r = "Counts", theta = "Theta", color = "mutation", base = "Base", start_angle = 0, direction = "counterclockwise", labels = {"mutation": "Condition"}, title = "Condition") # range_r = [0, 0.1]
+            mutHist = px.bar_polar(mutData, r = "Counts", theta = "Theta", color = "mutation", base = "Base", start_angle = 5, direction = "counterclockwise", labels = {"mutation": "Condition"}, title = "Condition") # range_r = [0, 0.1]
         else:
-            mutHist = px.bar_polar(mutData, r = "Counts", theta = "Theta", color = "mutation", base = "Base", start_angle = 0, direction = "counterclockwise", labels = {"mutation": "Condition"}, title = "Condition", range_r = [0, max_r])
+            mutHist = px.bar_polar(mutData, r = "Counts", theta = "Theta", color = "mutation", base = "Base", start_angle = 5, direction = "counterclockwise", labels = {"mutation": "Condition"}, title = "Condition", range_r = [0, max_r])
         mutHist.update_traces(opacity = 0.6)
 
         boundData = data.loc[data.D <= boundaryValue,]
@@ -2148,6 +2157,24 @@ class Model:
                                                 "A17": "160 - 170",
                                                 "A18": "170 - 180"})
         stateData.loc[:, 0:18] = stateData.iloc[:, 0:18].divide(stateData.sum(1, numeric_only = True), axis = 0)
+        stateData.loc[:, "180 - 190"] = stateData.loc[:, "170 - 180"]
+        stateData.loc[:, "190 - 200"] = stateData.loc[:, "160 - 170"]
+        stateData.loc[:, "200 - 210"] = stateData.loc[:, "150 - 160"]
+        stateData.loc[:, "210 - 220"] = stateData.loc[:, "140 - 150"]
+        stateData.loc[:, "220 - 230"] = stateData.loc[:, "130 - 140"]
+        stateData.loc[:, "230 - 240"] = stateData.loc[:, "120 - 130"]
+        stateData.loc[:, "240 - 250"] = stateData.loc[:, "110 - 120"]
+        stateData.loc[:, "250 - 260"] = stateData.loc[:, "100 - 110"]
+        stateData.loc[:, "260 - 270"] = stateData.loc[:, "90 - 100"]
+        stateData.loc[:, "270 - 280"] = stateData.loc[:, "80 - 90"]
+        stateData.loc[:, "280 - 290"] = stateData.loc[:, "70 - 80"]
+        stateData.loc[:, "290 - 300"] = stateData.loc[:, "60 - 70"]
+        stateData.loc[:, "300 - 310"] = stateData.loc[:, "50 - 60"]
+        stateData.loc[:, "310 - 320"] = stateData.loc[:, "40 - 50"]
+        stateData.loc[:, "320 - 330"] = stateData.loc[:, "30 - 40"]
+        stateData.loc[:, "330 - 340"] = stateData.loc[:, "20 - 30"]
+        stateData.loc[:, "340 - 350"] = stateData.loc[:, "10 - 20"]
+        stateData.loc[:, "350 - 360"] = stateData.loc[:, "0 - 10"]
         stateData = stateData.melt(id_vars = ["State", "Base"], var_name = "Theta", value_name = "Counts")
         stateHist = px.bar_polar(stateData, r = "Counts", theta = "Theta", color = "State", base = "Base", start_angle = 0, direction = "counterclockwise", title = "State")
         stateHist.update_traces(opacity = 0.6)
@@ -2211,7 +2238,7 @@ class Model:
         boundData["Base"] = 0
         boundData.loc[:, 1:19] = boundData.iloc[:, 1:19].divide(boundData.sum(1, numeric_only = True), axis = 0)
         boundData = boundData.melt(id_vars = ["mutation", "Base"], var_name = "Theta", value_name = "Counts")
-        boundHist = px.bar_polar(boundData, r = "Counts", theta = "Theta", color = "mutation", base = "Base", start_angle = 0, direction = "counterclockwise", title = "Bound")
+        boundHist = px.bar_polar(boundData, r = "Counts", theta = "Theta", color = "mutation", base = "Base", start_angle = 5, direction = "counterclockwise", title = "Bound")
         boundHist.update_traces(opacity = 0.6)
 
         diffuData = diffuData.rename(columns = {"A1": "0 - 10",
@@ -2265,7 +2292,8 @@ class Model:
         # boxPlot = px.box(boxData, x = "State", y = "Ratio", color = "mutation", points = "all", labels = {"Ratio": "Asymmetry Ratio"}) 
 
         # Average AC in each cells that lasted a certain duration each condition (using trajectories)
-        boxData.replace([np.inf, -np.inf], 0, inplace = True)
+        boxData = boxData[~boxData.isin([np.nan, np.inf, -np.inf]).any(1)]
+        # boxData.replace([np.inf, -np.inf], 0, inplace = True) #TODO: How to deal with inf and nan?
         lengthData = boxData.copy()
         lengthData['duration'] = lengthData['exposure_time'] * lengthData['traj_length']
         meanET = lengthData["exposure_time"].mean()
@@ -2636,6 +2664,7 @@ class Model:
                     figureData.sort_values(by = ["Condition"], inplace = True)
                     pieFigure.add_trace(go.Pie(labels = figureData["Condition"], values = figureData["Fraction"], title = pieData["mutation"][n], sort = False), row = n + 1, col = 1)
                 pieFigure.update_layout(font = dict(size = 18))
+                pieFigure.update_traces(marker = dict(colors = ['black', 'grey']))
             else:
                 boxFigure = [None]
                 densityFigure = [None]
@@ -2784,6 +2813,7 @@ class GICDashboard(QWidget):
         self.distributionOfTrackTab = QWidget()
         self.heatMapTab = QWidget()
         self.dwellTab = QWidget()
+        self.chromatinTab = QWidget()
         self.uploadTab = QWidget()
 
         # Add tabs to tabs
@@ -2796,6 +2826,7 @@ class GICDashboard(QWidget):
         self.tabs.addTab(self.distributionOfTrackTab, "D&istribution of Tracks")
         self.tabs.addTab(self.heatMapTab, "&Heat Map")
         self.tabs.addTab(self.dwellTab, "Dwe&ll Time")
+        self.tabs.addTab(self.chromatinTab, "&Chromatin")
         self.tabs.addTab(self.uploadTab, "&Upload")
 
         # Create the first tab
@@ -2954,7 +2985,7 @@ class GICDashboard(QWidget):
         diffusionUpperLimit = QLabel()
         diffusionUpperLimit.setText("Upper Limit For Plot:")
         self.diffusionUpperLimit = QSpinBox()
-        self.diffusionUpperLimit.setValue(2)
+        self.diffusionUpperLimit.setValue(6) #TODO: change back to 2
 
         boundaryValue = QLabel()
         boundaryValue.setText("Boundary Computation:")
@@ -3211,6 +3242,36 @@ class GICDashboard(QWidget):
         self.dwellTab.layout.addWidget(self.dwellDensity_browser, 1, 0, 1, 1)
         self.dwellTab.layout.addWidget(self.dwellPieRegion, 0, 1, 2, 1)
 
+        # Chromatin tab
+        self.chromatinTab.layout = QGridLayout(self)
+        self.chromatinTab.setLayout(self.chromatinTab.layout)
+
+        self.chromatinAC_browser = QtWebEngineWidgets.QWebEngineView(self)
+        self.chromatinAC_browser.setMinimumSize(400, 400)
+        self.chromatinTraj_browser = QtWebEngineWidgets.QWebEngineView(self)
+        self.chromatinTraj_browser.setMinimumSize(400, 400)
+        self.chromatinFast_browser = QtWebEngineWidgets.QWebEngineView(self)
+        self.chromatinFast_browser.setMinimumSize(400, 400)
+        self.chromatinSlow_browser = QtWebEngineWidgets.QWebEngineView(self)
+        self.chromatinSlow_browser.setMinimumSize(400, 400)
+
+        self.xAxisSelection = QComboBox()
+        self.xAxisSelection.setMaximumWidth(200)
+        yAxisText = QLabel()
+        yAxisText.setText("")
+        self.yAxisSelection = QComboBox()
+
+        self.chromatinTab.layout.addWidget(self.xAxisSelection, 1, 0, 1, 1)
+        self.chromatinTab.layout.addWidget(yAxisText, 2, 0, 1, 1)
+        self.chromatinTab.layout.addWidget(self.yAxisSelection, 3, 0, 1, 1)
+        self.chromatinTab.layout.addWidget(self.chromatinAC_browser, 0, 1, 1, 1)
+        self.chromatinTab.layout.addWidget(self.chromatinTraj_browser, 1, 1, 1, 1)
+        self.chromatinTab.layout.addWidget(self.chromatinFast_browser, 0, 2, 1, 1)
+        self.chromatinTab.layout.addWidget(self.chromatinSlow_browser, 1, 2, 1, 1)
+
+        # self.chromatinTab.layout.setColumnStretch(0, 5)
+        # self.chromatinTab.layout.setColumnStretch(1, 1)
+
         # Upload tab
         self.uploadTab.layout = QGridLayout(self)
         self.uploadTab.setLayout(self.uploadTab.layout)
@@ -3339,7 +3400,7 @@ class GICDashboard(QWidget):
         diffusionConstantMax.setText("Maximum Expected Diffusion Constant::")
         diffusionConstantMax.setToolTip("The maximal expected diffusion constant caused by Brownian motion in um^2/s.")
         self.diffusionConstantMaxBox = QDoubleSpinBox()
-        self.diffusionConstantMaxBox.setMaximum(10)
+        self.diffusionConstantMaxBox.setMaximum(99)
         self.diffusionConstantMaxBox.setMinimum(0)
         self.diffusionConstantMaxBox.setValue(3)
 
@@ -3382,17 +3443,19 @@ class GICDashboard(QWidget):
         pixelSize.setText("Pixel Size:")
         pixelSize.setToolTip("um per pixel.")
         self.pixelSize = QDoubleSpinBox()
-        self.pixelSize.setValue(0.13)
+        self.pixelSize.setDecimals(3)
+        self.pixelSize.setValue(0.130)
 
         psfScaling = QLabel()
         psfScaling.setText("PSF Scaling:")
-        psfScaling.setToolTip("PSF scaling.")
+        psfScaling.setToolTip("Point spread function value of the microscope.")
         self.psfScaling = QDoubleSpinBox()
-        self.psfScaling.setValue(1.35)
+        self.psfScaling.setDecimals(3)
+        self.psfScaling.setValue(1.350)
 
         detectionObjectiveNA = QLabel()
         detectionObjectiveNA.setText("NA of Detection Objective:")
-        detectionObjectiveNA.setToolTip("NA of detection objective.")
+        detectionObjectiveNA.setToolTip("NA of detection objective (the microscope lens).")
         self.detectionObjectiveNA = QDoubleSpinBox()
         self.detectionObjectiveNA.setValue(1.49)
 
@@ -3410,24 +3473,25 @@ class GICDashboard(QWidget):
 
         detectionBox = QLabel()
         detectionBox.setText("Detection Box:")
-        detectionBox.setToolTip("In pixels.")
+        detectionBox.setToolTip("Spatial sliding window width used for particle detection (in pixels).")
         self.detectionBox = QSpinBox()
         self.detectionBox.setValue(9)
 
         minIntensity = QLabel()
         minIntensity.setText("Minimum Intensity:")
-        minIntensity.setToolTip("Minimum intensity in counts.")
+        minIntensity.setToolTip("Minimum intensity to be classified as a point.")
         self.minIntensity = QSpinBox()
+        self.minIntensity.setMaximum(99999)
 
         maxIteration = QLabel()
         maxIteration.setText("Maximum Number of Iterations:")
-        maxIteration.setToolTip("Maximum number of iterations.")
+        maxIteration.setToolTip("The maximum number of iteration allowed during localization optimization.")
         self.maxIteration = QSpinBox()
         self.maxIteration.setValue(50)
 
         terminationTolerance = QLabel()
         terminationTolerance.setText("Termination Tolerance:")
-        terminationTolerance.setToolTip("Termination tolerance.")
+        terminationTolerance.setToolTip("The termination tolerance (the value is 10 to the power of the input value). If the variation of x and y coordinates is lesser than this, the iteration will stop.")
         self.terminationTolerance = QSpinBox()
         self.terminationTolerance.setMinimum(-99)
         self.terminationTolerance.setValue(-2)
@@ -3436,14 +3500,14 @@ class GICDashboard(QWidget):
         self.radiusTolerance.setCheckable(True)
         radiusTolerance = QLabel()
         radiusTolerance.setText("Radius Tolerance:")
-        radiusTolerance.setToolTip("Radius tolerance in percent.")
+        radiusTolerance.setToolTip("The Gaussian radius tolerance (in percentage) with respect to 'point spread function deviation' (psfStd).")
         radiusTolerance.setEnabled(False)
         self.radiusToleranceValue = QSpinBox()
         self.radiusToleranceValue.setValue(50)
         self.radiusToleranceValue.setEnabled(False)
         positionTolerance = QLabel()
         positionTolerance.setText("Position Tolerance:")
-        positionTolerance.setToolTip("Maximum position refinement.")
+        positionTolerance.setToolTip("The tolerance for the x and y coordinates of the point detected during the localization (in pixels).")
         positionTolerance.setEnabled(False)
         self.positionTolerance = QDoubleSpinBox()
         self.positionTolerance.setValue(1.5)
@@ -3457,13 +3521,13 @@ class GICDashboard(QWidget):
         self.threshLocPrec.setCheckable(True)
         minLoc = QLabel()
         minLoc.setText("Minimum Loc:")
-        minLoc.setToolTip("Minimum Loc.")
+        minLoc.setToolTip("Minimum Loc. \nCurrently not being used.")
         minLoc.setEnabled(False)
         self.minLoc = QSpinBox()
         self.minLoc.setEnabled(False)
         maxLoc = QLabel()
         maxLoc.setText("Maximum Loc:")
-        maxLoc.setToolTip("Maximum Loc, leave zero for infinity.")
+        maxLoc.setToolTip("Maximum Loc, leave zero for infinity. \nCurrently not being used.")
         maxLoc.setEnabled(False)
         self.maxLoc = QSpinBox()
         self.maxLoc.setEnabled(False)
@@ -3476,13 +3540,13 @@ class GICDashboard(QWidget):
         self.threshSNR.setCheckable(True)
         minSNR = QLabel()
         minSNR.setText("Minimum SNR:")
-        minSNR.setToolTip("Minimum SNR.")
+        minSNR.setToolTip("Minimum SNR. \nCurrently not being used.")
         minSNR.setEnabled(False)
         self.minSNR = QSpinBox()
         self.minSNR.setEnabled(False)
         maxSNRIter = QLabel()
         maxSNRIter.setText("Max Number of Iterations for Thresh SNR:")
-        maxSNRIter.setToolTip("Maximum SNR, leave zero for infinity.")
+        maxSNRIter.setToolTip("Maximum SNR, leave zero for infinity. \nCurrently not being used.")
         maxSNRIter.setEnabled(False)
         self.maxSNRIter = QSpinBox()
         self.maxSNRIter.setEnabled(False)
@@ -3526,42 +3590,42 @@ class GICDashboard(QWidget):
 
         trackStart = QLabel()
         trackStart.setText("Track Start:")
-        trackStart.setToolTip("Track start.")
+        trackStart.setToolTip("Track start. Currently not being used.")
         self.trackStart = QSpinBox()
         self.trackStart.setValue(1)
 
         trackEnd = QLabel()
         trackEnd.setText("Track End:")
-        trackEnd.setToolTip("Track end, leave zero for infinity.")
+        trackEnd.setToolTip("Track end, leave zero for infinity. Currently not being used.")
         self.trackEnd = QSpinBox()
 
         exponentialFactorSearch = QLabel()
         exponentialFactorSearch.setText("Search Exponential Factor:")
-        exponentialFactorSearch.setToolTip("Search exponential factor.")
+        exponentialFactorSearch.setToolTip("Search exploration factor, a multiplicative factor to the maximum amount a point can move.")
         self.exponentialFactorSearch = QDoubleSpinBox()
         self.exponentialFactorSearch.setValue(1.2)
 
         statWin = QLabel()
         statWin.setText("Stat Win:")
-        statWin.setToolTip("Stat win.")
+        statWin.setToolTip("Number of frames data to be used in computing trajectories data.")
         self.statWin = QSpinBox()
         self.statWin.setValue(10)
 
         compMax = QLabel()
         compMax.setText("Maximum Comp:")
-        compMax.setToolTip("Maximum comp.")
+        compMax.setToolTip("Maximum number of trajectories a point can belong to (during trajectories forming stage).")
         self.compMax = QSpinBox()
         self.compMax.setValue(5)
 
         intLawWeight = QLabel()
         intLawWeight.setText("Int Law Weight:")
-        intLawWeight.setToolTip("Int law weight.")
+        intLawWeight.setToolTip("The intensity probability law weighting, value ranges from 0 to 1.0, with 1.0 accounting for intensity staying on and 0 accounting for blinking state. \nThe reconnection procedure take into account the point's intensity, diffusion and blinking.")
         self.intLawWeight = QDoubleSpinBox()
         self.intLawWeight.setValue(0.9)
 
         difLawWeight = QLabel()
         difLawWeight.setText("Diff Law Weight:")
-        difLawWeight.setToolTip("Diff law weight.")
+        difLawWeight.setToolTip("The diffusion probability law weighting, value ranges from 0 to 1.0, with 1.0 accounting for local diffusion (based on estimated standard deviation of diffusion based on 'statWin' number of past frames information) and 0 accounting for free diffusion. \nThe reconnection procedure take into account the point's intensity, diffusion and blinking, a value of 0.9 with emphasizes on local behaviour while allowing the possibility of a sudden increase towards free diffusion.")
         self.difLawWeight = QDoubleSpinBox()
         self.difLawWeight.setValue(0.5)
 
