@@ -13,7 +13,8 @@ This dashboard is designed for the spatial and temporal analysis of fluorescentl
 This dashboard requires MATLAB with Statictics and Curve Fitting toolbox installed.
 
 # Dashboard Usage
-The dashboard would classify the files uploaded based on the naming convention; with the string/text before the first "_" being used as condition type to group the file/cell data.
+1. More than one file (.tif for pre-processed files, .mat for post-processed files) could be uploaded at the same time from the "Upload" tab using the respective buttons.
+2. The files could be in any directory; however, they follow a specific naming convention. The dashboard would classify the files uploaded based on the naming convention; with the string/text before the first "_" being used as condition type to group the file/cell data.
 Below are some example of the file name convention for comparing between 2 conditions of 3 files each: <br>
 Condition-1_Cell_1.tiff <br>
 Condition-1_Cell_2.tiff <br>
@@ -21,6 +22,14 @@ Condition-1_Cell_3.tiff <br>
 Condition-2_Cell_1.tiff <br>
 Condition-2_Cell_2.tiff <br>
 Condition-2_Cell_3.tiff <br>
+3. If you have a background image that you want to use as overlay and/or comparison (DAPI or Hoist stain compare to trajectories, you can upload the DAPI/Hoechst file together with previous step, naming the file as WT_Cell1_DAPI.tif (even if it's Hoechst stain, currently it looks for "_DAPI" to existing file name and mark it as a background file).
+4. After pressing the "Upload" button and selecting the files. The dashboard will process all the data on its own (it may show a MATLAB info tab on the progress, I have not tested if this will happen on a Mac/Linux system). Once it's done processing all the files, you should be able to go to any tabs in any order and you can view the visualisation of the data it processed.
+
+## A few known issues that are being worked on and workaround are as follows:
+1. If the dashboard crashes when visiting certain tabs, it could be that some file has mistakenly got recorded onto the dashboard.db despite it failing the Quality Control (QC) that was marked on the Upload tab. Thsis result in the dashboard crashes when attempting to view these data.
+Workaround: Delete the database.db and re-upload new data with lower QC requirement (the "Clip Factor", "Trajectory Length" and "Minimum Number of Trajectory" undering the "Generic Parameters" are the most important parameters. Try changing the "Analysis Type" to "Percentage", "Clip Factor" to 100, "Trajectory Length" to 1 and "Minimum Number of Trajectory" to 1 to accept all data.
+2. "Angle Plots" tab can crash when data with too short duration or translocation distance exist in the database.
+
 
 # Data Table Format
 ## FileList
