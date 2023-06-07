@@ -1396,7 +1396,10 @@ class Controller:
                 # data = pd.read_sql_query("select * from TrackList", conn)
                 df = pd.read_sql_query("select * from FileList", conn)
                 self._view.textEdit.setText(pd.read_sql_query("select text from Settings", conn).loc[0, "text"])
-                dataExist = True
+                if len(df) > 0:
+                    dataExist = True
+                else:
+                    dataExist = False
             except:
                 dataExist = False
                 
