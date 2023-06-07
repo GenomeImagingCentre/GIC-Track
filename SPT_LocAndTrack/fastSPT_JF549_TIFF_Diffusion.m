@@ -21,7 +21,7 @@ disp('added paths for MTT algorithm mechanics, bioformats...');
 
 load("../tifupload.mat");
 bins = 20; % temp, will move plotting to dashboard
-runParallel = false;
+% runParallel = false;
 % runParallel = true;
 
 %% Getting file names
@@ -323,7 +323,7 @@ if acquisition_rate == "slow"
 %   % Write the table to a CSV file
 %   writetable(T,[pathname 'LongDwell_data.csv']);
 end
-clear output_path_further_processing
+% clear output_path_further_processing
 
 %% Producing diffusion data
 tracked_files = cell(numel(Filenames), 1);
@@ -333,6 +333,7 @@ end
 subPlotNumbers = ceil(sqrt(length(tracked_files)));
 
 figure;
+files_to_remove = cell(length(Filenames), 1);
 if runParallel
   % if there's less files to run than number of cores, reduce the core to use even further
   p = gcp('nocreate');
@@ -402,6 +403,10 @@ if runParallel
     end
     %
 
+    if isempty(tracksE)
+      files_to_remove{iter} = 1;
+      continue
+    end
     uTracks = unique(tracksE(:, 5));
     for n = 1 : numel(tracks)
       traj_size = size(tracks(n).data, 1);
@@ -549,6 +554,11 @@ else
     end
     %
 
+    if isempty(tracksE)
+      rejectedFiles{end+1} = Filenames{iter};
+      files_to_remove{iter} = 1;
+      continue
+    end
     uTracks = unique(tracksE(:, 5));
     for n = 1 : numel(tracks)
       traj_size = size(tracks(n).data, 1);
@@ -646,6 +656,16 @@ else
 end
 sgtitle('Diffusion Coefficient for all population', 'interpreter', 'latex');
 
+p = gcp('nocreate');
+if ~isempty(p)
+  delete(p)
+  rejectedFiles = vertcat(rejectedFiles, Filenames(~cellfun(@isempty, files_to_remove)))';
+end
+Filenames(~cellfun(@isempty, files_to_remove)) = [];
+
+% create a mat file to report back the rejected files to Python
+save([output_path_further_processing, 'acceptedFiles.mat'], 'Filenames');
+save([output_path_further_processing, 'rejectedFiles.mat'], 'rejectedFiles');
 clear clip_factor analysis_type tracks rows_to_remove lfit D E msd ...
       subPlotNumbers tracked_files trackedPar traj_length track_length ...
       D0 tlist rlist JDH jdTracks binEdges ...
