@@ -838,17 +838,18 @@ class Controller:
             else:
                 filenames = file_names
             dataFile, dataTraj, dataTrack, dataJD, dataAngle, dataDwellTime = self._model.processUploadedFileToDatabase(filenames, acquisition_rate, exposureTime, pixelSize, uploadParameters) # file_names is all files, including rejected files
-            with sqlite3.connect('database.db') as conn:
-                dataFile.to_sql('FileList', conn, if_exists="append")
-                dataTraj.to_sql('TrajectoryList', conn, if_exists="append")
-                dataTrack.to_sql('TrackList', conn, if_exists="append")
-                dataJD.to_sql('JDList', conn, if_exists="append")
-                dataAngle.to_sql('AngleList', conn, if_exists="append")
-                if len(dataDwellTime) > 0:
-                    dataDwellTime.to_sql('DwellTimeData', conn, if_exists="append") # TODO: Make a new table for dwell time data
-                textData = pd.DataFrame({"text": self._view.textEdit.toPlainText()}, index = [0])
-                textData.to_sql('Settings', conn, if_exists="replace")
-            self._loadExistingData()
+            if len(dataFile) > 0:
+                with sqlite3.connect('database.db') as conn:
+                    dataFile.to_sql('FileList', conn, if_exists="append")
+                    dataTraj.to_sql('TrajectoryList', conn, if_exists="append")
+                    dataTrack.to_sql('TrackList', conn, if_exists="append")
+                    dataJD.to_sql('JDList', conn, if_exists="append")
+                    dataAngle.to_sql('AngleList', conn, if_exists="append")
+                    if len(dataDwellTime) > 0:
+                        dataDwellTime.to_sql('DwellTimeData', conn, if_exists="append") # TODO: Make a new table for dwell time data
+                    textData = pd.DataFrame({"text": self._view.textEdit.toPlainText()}, index = [0])
+                    textData.to_sql('Settings', conn, if_exists="replace")
+                self._loadExistingData()
 
     def comboMutationUpdate(self):
         data = self._model.updateMutationFilelist(self._view.comboAcquisitionRate.currentData())
