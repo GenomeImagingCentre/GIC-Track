@@ -10,7 +10,7 @@ This dashboard is designed for the spatial and temporal analysis of fluorescentl
 3. Once finished, run the “Requirements.bat” attached to install the required Python libraries.
 
 # Requirement
-This dashboard requires MATLAB with Statictics and Curve Fitting toolbox installed.
+This dashboard requires MATLAB with Statistics and Curve Fitting toolbox installed.
 
 # Dashboard Usage
 1. More than one file (.tif for pre-processed files, .mat for post-processed files) could be uploaded at the same time from the "Upload" tab using the respective buttons.
