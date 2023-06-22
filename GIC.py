@@ -740,7 +740,7 @@ class Controller:
                       "psf_scale": self._view.psfScaling.value(),
                       "wvlnth": float(self._view.emissionWavelengthBox.value()),
                       "iNA": float(self._view.detectionObjectiveNA.value()),
-                      "psfStd": self._view.psfScaling.value() * 0.55 * (self._view.emissionWavelengthBox.value() * 1000) / self._view.detectionObjectiveNA.value() / 1.17 / self._view.pixelSize.value() / 2,
+                      "psfStd": self._view.psfScaling.value() * 0.55 * (self._view.emissionWavelengthBox.value()) / self._view.detectionObjectiveNA.value() / 1.17 / self._view.pixelSize.value() / 2,
                       "FrameRate": float(self._view.exposureTimeBox.value() / 1000),
                       "FrameSize": float(self._view.exposureTimeBox.value() / 1000)
                      }
