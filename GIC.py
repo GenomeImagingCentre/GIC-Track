@@ -182,7 +182,7 @@ class CheckableComboBox(QComboBox):
         self.model().appendRow(item)
 
     def addItems(self, texts, datalist=None):
-        for i, text in enumerate(texts):
+        for i, text in enumerate(sorted(texts)):
             try:
                 data = datalist[i]
             except (TypeError, IndexError):
@@ -202,6 +202,12 @@ class CheckableComboBox(QComboBox):
         res = []
         for i in range(self.model().rowCount()):
             self.model().item(i).setCheckState(Qt.Checked)
+
+    def uncheckAll(self):
+        # Check all items in the list
+        res = []
+        for i in range(self.model().rowCount()):
+            self.model().item(i).setCheckState(Qt.Unchecked)
 
 class DStatistic(object):
     """
@@ -896,33 +902,40 @@ class Controller:
 
     def trajectoryData(self):
         selectionFile = self._view.comboFileList.currentData()
-        data = self._model.getTrajectoryDataFiles(selectionFile)
-        boxData = data >> group_by(X.filename, X.mutation) >> summarize(TrajNumber = summary_functions.n_distinct(X.trajID))
-        boxFigure = px.box(boxData, y = "TrajNumber", color = "mutation", points = "all", hover_name = "filename", labels = {"mutation": "Condition"})
-        densityData = data >> group_by(X.filename, X.mutation) >> summarize(TrajNumber = summary_functions.n_distinct(X.trajID), CellArea = summary_functions.mean(X.pixelSize)** 2 * summary_functions.mean(X.cellSize))
-        densityData["TrajDensity"] = densityData.loc[:, "TrajNumber"] / densityData.loc[:, "CellArea"]
-        densityFigure = px.box(densityData, y = "TrajDensity", color = "mutation", points = "all", hover_name = "filename", labels = {"TrajDensity": "Trajectories per Area (um^2)", "mutation": "Condition"})
-        # boxFigure = self._model.add_pvalue_annotation(boxFigure, boxData, "mutation", ["WT", "WT-Cy"], "TrajNumber", [1.00, 1.01])
-        self._view.trajectoryNumberBox_browser.setHtml(boxFigure.to_html(include_plotlyjs='cdn'))
-        self._view.trajectoryDensityBox_browser.setHtml(densityFigure.to_html(include_plotlyjs='cdn'))
+        try:
+            data = self._model.getTrajectoryDataFiles(selectionFile)
+            boxData = data >> group_by(X.filename, X.mutation) >> summarize(TrajNumber = summary_functions.n_distinct(X.trajID))
+            boxFigure = px.box(boxData, y = "TrajNumber", color = "mutation", points = "all", hover_name = "filename", labels = {"mutation": "Condition"})
+            densityData = data >> group_by(X.filename, X.mutation) >> summarize(TrajNumber = summary_functions.n_distinct(X.trajID), CellArea = summary_functions.mean(X.pixelSize)** 2 * summary_functions.mean(X.cellSize))
+            densityData["TrajDensity"] = densityData.loc[:, "TrajNumber"] / densityData.loc[:, "CellArea"]
+            densityFigure = px.box(densityData, y = "TrajDensity", color = "mutation", points = "all", hover_name = "filename", labels = {"TrajDensity": "Trajectories per Area (um^2)", "mutation": "Condition"})
+            # boxFigure = self._model.add_pvalue_annotation(boxFigure, boxData, "mutation", ["WT", "WT-Cy"], "TrajNumber", [1.00, 1.01])
+            self._view.trajectoryNumberBox_browser.setHtml(boxFigure.to_html(include_plotlyjs='cdn'))
+            self._view.trajectoryDensityBox_browser.setHtml(densityFigure.to_html(include_plotlyjs='cdn'))
+        except:
+            pass
 
     def diffusionPlotUpdate(self):
-        selectionFile = self._view.comboFileList.currentData()
-        if self._view.diffusionErrorVariation.isChecked() == True:
-            errorView = 0
-        elif self._view.diffusionErrorSTD.isChecked() == True:
-            errorView = 1
-        else:
-            errorView = 2
-        data = self._model.getTrajectoryFiles(selectionFile)
-        if self._view.boundaryComputation.currentText() == "Formula":
-            boundaryValue = np.log10(data.loc[0, "pixelSize"]**2 / (4 * 4 * data.loc[0, "exposure_time"]))
-        else:
-            boundaryValue = self._view.boundaryRawValue.value()
-        figure, pieFigure = self._model.produceDiffusionData(data, self._view.diffusionBinSize.value(), self._view.diffusionLowerLimit.value(), self._view.diffusionUpperLimit.value(), errorView, boundaryValue) 
-        self._view.diffusion_browser.setHtml(figure.to_html(include_plotlyjs='cdn'))
-        self._view.diffusionFraction_browser.setHtml(pieFigure.to_html(include_plotlyjs='cdn'))
-        self._view.diffusionFraction_browser.setMinimumHeight(400 * len(list(set(data["mutation"]))))
+        try:
+            selectionFile = self._view.comboFileList.currentData()
+            if self._view.diffusionErrorVariation.isChecked() == True:
+                errorView = 0
+            elif self._view.diffusionErrorSTD.isChecked() == True:
+                errorView = 1
+            else:
+                errorView = 2
+            data = self._model.getTrajectoryFiles(selectionFile)
+            if self._view.boundaryComputation.currentText() == "Formula":
+                boundaryValue = np.log10(data.loc[0, "pixelSize"]**2 / (4 * 4 * data.loc[0, "exposure_time"]))
+            else:
+                boundaryValue = self._view.boundaryRawValue.value()
+            figure, pieFigure = self._model.produceDiffusionData(data, self._view.diffusionBinSize.value(), self._view.diffusionLowerLimit.value(), self._view.diffusionUpperLimit.value(), errorView, boundaryValue) 
+            self._view.diffusion_browser.setHtml(figure.to_html(include_plotlyjs='cdn'))
+            self._view.diffusionFraction_browser.setHtml(pieFigure.to_html(include_plotlyjs='cdn'))
+            self._view.diffusionFraction_browser.setMinimumHeight(400 * len(list(set(data["mutation"]))))
+        except:
+            self._view.diffusion_browser.setHtml("")
+            self._view.diffusionFraction_browser.setHtml("")
 
     def jumpDistancePlotUpdate(self):
         self._view.diffusionTrack2Par_browser.setHtml(self._view.loadingHtml)
@@ -1193,6 +1206,13 @@ class Controller:
         elif tabIndex == 7: # Chromatin tab
             self.chromatinTabUpdate()
 
+    def unselectAllFiles(self):
+        # TODO: Disable the calculation while unticking or untick all at once instead of bringing user back to homepage
+        # Brings user back to home page to prevent it compute as it untick
+        self._view.tabs.setCurrentIndex(0)
+        # Unticking all files
+        self._view.comboFileList.uncheckAll()
+
     def deleteFiles(self):
         selectionFile = self._view.comboFileList.currentData()
         with sqlite3.connect('database.db') as conn:
@@ -1243,6 +1263,7 @@ class Controller:
         self._view.comboAcquisitionRate.model().dataChanged.connect(self.tabsUpdate)
         self._view.comboMutation.model().dataChanged.connect(self.tabsUpdate)
         self._view.comboFileList.model().dataChanged.connect(self.tabsUpdate)
+        self._view.unselectAllFiles.pressed.connect(self.unselectAllFiles)
         self._view.deleteFile.pressed.connect(self.deleteFiles)
 
         self._view.exportDatabase.pressed.connect(self.exportingDatabase)
@@ -3667,6 +3688,7 @@ class GICDashboard(QWidget):
         fileSelection = QLabel()
         fileSelection.setText("File(s):")
         self.comboFileList = CheckableComboBox()
+        self.unselectAllFiles = QPushButton("Unselect All Files", default = False, autoDefault = False)
         self.deleteFile = QPushButton("Delete Selected Files", default = False, autoDefault = False)
 
         layout = QVBoxLayout()
@@ -3677,6 +3699,7 @@ class GICDashboard(QWidget):
         layout.addWidget(fileSelection)
         layout.addWidget(self.comboFileList)
         layout.addStretch(1)
+        layout.addWidget(self.unselectAllFiles)
         layout.addWidget(self.deleteFile)
         self.dataSelectionPanel.setLayout(layout)    
 
