@@ -1111,6 +1111,15 @@ class Controller:
             self._view.dwellDensity_browser.setHtml("")
             self._view.dwellPie_browser.setHtml("")
 
+    def dwellTimeDataSave(self):
+        selectionFile = self._view.comboFileList.currentData()
+        if selectionFile == []:
+            return
+        dwellData, processedDensityData, figureData = self._model.produceDwellTimeData(selectionFile)
+        dwellData.to_csv("DwellData.csv")
+        processedDensityData.to_csv("DensityDwellData.csv")
+        figureData.to_csv("FractionDwellData.csv")
+
     def chromatinTabUpdate(self):
         selectionFile = self._view.comboFileList.currentData()
         if selectionFile == []:
@@ -1305,6 +1314,9 @@ class Controller:
 
         # Heatmap tab
         self._view.heatMapSlider.valueChanged.connect(self.heatMapUpdateFrame)
+
+        # Dwell time tab
+        self._view.dwellTimeExportButton.clicked.connect(self.dwellTimeDataSave)
 
         # Upload tab
         self._view.acquisitionRateFast.clicked.connect(partial(self.loadUploadPreset, "fast"))
@@ -2703,6 +2715,59 @@ class Model:
             pieFigure = [None]
         return boxFigure, densityFigure, pieFigure
 
+    def produceDwellTimeData(self, selectionFile):
+        # filter out to only slow acquisition data first
+        try:
+            with sqlite3.connect('database.db') as conn: #TODO : Filter out filename with slow acquisition time first and then search the database with the slow acquisition filename only
+                if len(selectionFile) > 1:
+                    data = pd.read_sql_query(f"select FileList.filename, FileList.mutation, DwellTimeData.R1, DwellTimeData.R2, DwellTimeData.F from FileList INNER JOIN DwellTimeData ON FileList.filename = DwellTimeData.filename WHERE FileList.filename IN {tuple(selectionFile)} AND acquisition_rate = 'slow'", conn)
+                else:
+                    data = pd.read_sql_query(f"select FileList.filename, FileList.mutation, DwellTimeData.R1, DwellTimeData.R2, DwellTimeData.F from FileList INNER JOIN DwellTimeData ON FileList.filename = DwellTimeData.filename WHERE FileList.filename = :selectionFile AND acquisition_rate = 'slow'", conn, params = {"selectionFile": selectionFile[0]})
+            if len(data.index) > 0:
+                dwellData = pd.DataFrame()
+                for n in range(len(data.index)):
+                    dwellDataTemp = pd.DataFrame({"filename": data["filename"][n],
+                                                "mutation": data["mutation"][n],
+                                                "R": ["Long", "Short"],
+                                                "rTime": [data["R1"][n], data["R2"][n]],
+                                                "Fraction": [data["F"][n], 1 - data["F"][n]]
+                                               }
+                                              )
+                    dwellData = pd.concat([dwellData, dwellDataTemp], axis = 0)
+                boxFigure = px.box(dwellData, x = "R", y = "rTime", color = "mutation", points = "all", labels = {"R": "Dwell-Time Types", "rTime": "Dwell-Time (s)", "mutation": "Condition"}, hover_name = "filename")
+                
+                densityData = self.getDwellTimeDensityData(selectionFile)
+                # Convert traj_length to seconds
+                densityData.loc[:, "traj_length"] = densityData.loc[:, "exposure_time"] * densityData.loc[:, "traj_length"]
+                processedDensityData = data.copy()
+                fileList = list(set(data.loc[:, "filename"]))
+                for file in fileList:
+                    trajNumber = len(densityData.loc[densityData.loc[:, "filename"] == file, "traj_length"] > data.loc[data.loc[:, "filename"] == file, "R1"].to_list()[0])
+                    cellArea = densityData.loc[densityData.loc[:, "filename"] == file, "pixelSize"]**2 * densityData.loc[densityData.loc[:, "filename"] == file, "cellSize"]
+                    processedDensityData.loc[processedDensityData.loc[:, "filename"] == file, "Density"] = trajNumber / cellArea.mean()
+                densityFigure = px.box(processedDensityData, y = "Density", color = "mutation", points = "all", hover_name = "filename", title = "Long Dwell Time Trajectories Density", labels = {"Density": "Trajectories per Area (um^2)", "mutation": "Condition"})
+
+                pieData = data >> group_by(X.mutation) >> summarize(Long = X.F.mean(), Short = (1 - X.F.mean()))
+                pieFigure = make_subplots(rows = pieData.shape[0], cols = 1, specs=[[{"type": "domain"}]] * pieData.shape[0])
+                for n in range(pieData.shape[0]):
+                    figureData = pd.DataFrame({"Condition": ["Long", "Short"], 
+                                               "Fraction": [pieData["Long"][n], pieData["Short"][n]]
+                                              }
+                                             )
+                    figureData.sort_values(by = ["Condition"], inplace = True)
+                    pieFigure.add_trace(go.Pie(labels = figureData["Condition"], values = figureData["Fraction"], title = pieData["mutation"][n], sort = False), row = n + 1, col = 1)
+                pieFigure.update_layout(font = dict(size = 18))
+                pieFigure.update_traces(marker = dict(colors = ['black', 'grey']))
+            else:
+                dwellData = [None]
+                processedDensityData = [None]
+                figureData = [None]
+        except:
+            dwellData = [None]
+            processedDensityData = [None]
+            figureData = [None]
+        return dwellData, processedDensityData, figureData
+
 class GICDashboard(QWidget):
     def __init__(self, parent=None):
         super(GICDashboard, self).__init__(parent)
@@ -3266,9 +3331,12 @@ class GICDashboard(QWidget):
         self.dwellPieRegion.setWidget(self.dwellPie_browser)
         self.dwellPieRegion.setMaximumWidth(600)
 
+        self.dwellTimeExportButton = QPushButton("Export Data", default = False, autoDefault = False)
+
         self.dwellTab.layout.addWidget(self.dwellBox_browser, 0, 0, 1, 1)
         self.dwellTab.layout.addWidget(self.dwellDensity_browser, 1, 0, 1, 1)
         self.dwellTab.layout.addWidget(self.dwellPieRegion, 0, 1, 2, 1)
+        self.dwellTab.layout.addWidget(self.dwellTimeExportButton, 2, 0, 1, 2)
 
         # Chromatin tab
         self.chromatinTab.layout = QGridLayout(self)
