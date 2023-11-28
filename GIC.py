@@ -35,6 +35,7 @@ import matplotlib.pyplot as plt
 import plotly.offline as po
 import fnmatch # unix filename filtering
 import math, time, h5py, copy, shutil
+import plotly
             
 class PlotlySchemeHandler(QtWebEngineCore.QWebEngineUrlSchemeHandler):
     def __init__(self, app):
@@ -199,13 +200,11 @@ class CheckableComboBox(QComboBox):
 
     def checkAll(self):
         # Check all items in the list
-        res = []
         for i in range(self.model().rowCount()):
             self.model().item(i).setCheckState(Qt.Checked)
 
     def uncheckAll(self):
         # Check all items in the list
-        res = []
         for i in range(self.model().rowCount()):
             self.model().item(i).setCheckState(Qt.Unchecked)
 
@@ -326,6 +325,7 @@ class produceJumpDistancePlot(QtCore.QThread):
             threeParFigure.update_traces(name = "Diffusing", selector = dict(line_color="#00CC96"))
             threeParFigure.update_traces(name = "Mixed", selector = dict(line_color="#AB63FA"))
             threeParFigure.update_traces(name = "Bound", selector = dict(line_color="#FFA15A"))
+            # plotly.io.write_image(threeParFigure, "Images/JumpDistance.svg")
             self.diffusionTrack3Par.emit(threeParFigure.to_html(include_plotlyjs='cdn'))
 
         # twoParFigure.update_layout(showlegend=False)
@@ -440,10 +440,9 @@ class produceHeatMapPlot(QtCore.QThread):
 
         self.view.heatMapLiveTrajsFigure = figureLiveTrajs
 
-        rMax = 1.5
-        dr = 0.1
+        rMax = 20 # 1.5
+        dr = 1 # 0.1
         mutList = list(dict.fromkeys(trajData["mutation"]))
-        r = np.arange(0, rMax + dr, dr)
         pcData = pd.DataFrame()
         for n in range(len(mutList)):
             g = self.pairCorrelationFunction_2D(trajData.loc[trajData.loc[:, "mutation"] == mutList[n], "meanX"], trajData.loc[trajData.loc[:, "mutation"] == mutList[n], "meanY"], rMax, dr)
@@ -543,6 +542,7 @@ class updateHeatMapPlot(QtCore.QThread):
         self.frame = frame
 
 class produceAnglePlot(QtCore.QThread):
+    mutHistSignal = pyqtSignal([object])
     trackAngleMut = pyqtSignal([object])
     trackAngleState = pyqtSignal([object])
     trackAngleBound = pyqtSignal([object])
@@ -557,6 +557,7 @@ class produceAnglePlot(QtCore.QThread):
         data = self.model.getAngleData(self.selectionFile)
         dataTrack = self.model.getAngleTrackFiles(self.selectionFile)
         mutHist, stateHist, boundHist, diffuHist, trendPlot, boxPlot = self.model.produceAnglePlots(data, dataTrack, self.boundaryValue, self.selectionAngle, self.viewAllData)
+        self.mutHistSignal.emit(mutHist)
         self.trackAngleMut.emit(mutHist.to_html(include_plotlyjs='cdn'))
         self.trackAngleState.emit(stateHist.to_html(include_plotlyjs='cdn'))
         self.trackAngleBound.emit(boundHist.to_html(include_plotlyjs='cdn'))
@@ -705,6 +706,25 @@ class Controller:
         # self._view.trajectoryPlotTab.layout.count()
         # self._view.trajectoryPlotTab.layout.itemAt(1).widget().setValue(0)
         # self._view.trajectoryPlotTab.layout.itemAtPosition(0,0)
+
+        # Plots download
+        self.produceAngleFigure.mutHistSignal.connect(self.saveSVG)
+        self._view.trackAngleMut_browser.page().profile().downloadRequested.connect(self.savePlot)
+
+    def saveSVG(self, plot):
+        plotly.io.write_image(plot, "Images/plot.svg")
+        return
+    
+    def savePlot(self, download):
+        # https://stackoverflow.com/questions/62545804/issue-about-plotly-when-clicked-the-download-plot-icon-within-pyqt5-qwebenginevi
+        # save_file_name_dialog is a function to show the windows file window
+        # image_path = save_file_name_dialog(self, "Choose your file", "Png files (*.png)")
+        # if path:
+            # download.setPath(image_path)
+            # download.accept()
+        download.setPath("Images/newplot.png")
+        download.accept()
+        return
 
     def uploadFileButton(self, fileType):
         if not os.path.exists(os.path.realpath(os.getcwd() +"/Data/" + "fast-raw")):
@@ -857,6 +877,7 @@ class Controller:
                     textData.to_sql('Settings', conn, if_exists="replace")
                 self._loadExistingData()
 
+    # File Selection Tabs
     def comboMutationUpdate(self):
         data = self._model.updateMutationFilelist(self._view.comboAcquisitionRate.currentData())
         self._view.comboMutation.model().clear()
@@ -880,6 +901,36 @@ class Controller:
         data = self._model.getSelectedFiles(self._view.comboAcquisitionRate.currentData(), self._view.comboMutation.currentData(), self._view.comboFileList.currentData(), "FileList")
         return data
 
+    def unselectAllFiles(self):
+        # TODO: Disable the calculation while unticking or untick all at once instead of bringing user back to homepage
+        # Brings user back to home page to prevent it compute as it untick
+        self._view.tabs.setCurrentIndex(0)
+        # Unticking all files
+        self._view.comboFileList.uncheckAll()
+
+    def deleteFiles(self):
+        selectionFile = self._view.comboFileList.currentData()
+        with sqlite3.connect('database.db') as conn:
+            if len(selectionFile) > 1:
+                data = pd.read_sql_query(f"SELECT TrackList.trajID FROM TrackList INNER JOIN TrajectoryList ON TrackList.trajID = TrajectoryList.trajID AND TrajectoryList.filename IN {tuple(selectionFile)}", conn)
+                trajIDs = tuple(pd.unique(data.trajID))
+                conn.execute(f"DELETE FROM TrackList WHERE TrackList.trajID IN {trajIDs}")
+                conn.execute(f"DELETE FROM TrajectoryList WHERE TrajectoryList.filename IN {tuple(selectionFile)}")
+                conn.execute(f"DELETE FROM JDList WHERE JDList.filename IN {tuple(selectionFile)}")
+                conn.execute(f"DELETE FROM DwellTimeData WHERE DwellTimeData.filename IN {tuple(selectionFile)}")
+                conn.execute(f"DELETE FROM FileList WHERE FileList.filename IN {tuple(selectionFile)}")
+            else:
+                data = pd.read_sql_query(f"SELECT TrackList.trajID FROM TrackList INNER JOIN TrajectoryList ON TrackList.trajID = TrajectoryList.trajID AND TrajectoryList.filename = :selectionFile", conn, params = {"selectionFile": selectionFile[0]})
+                trajIDs = tuple(pd.unique(data.trajID))
+                conn.execute(f"DELETE FROM TrackList WHERE TrackList.trajID IN {trajIDs}")
+                conn.execute("DELETE FROM TrajectoryList WHERE TrajectoryList.filename = ?", (selectionFile[0],))
+                conn.execute("DELETE FROM JDList WHERE JDList.filename = ?", (selectionFile[0],))
+                conn.execute("DELETE FROM DwellTimeData WHERE DwellTimeData.filename = ?", (selectionFile[0],))
+                conn.execute("DELETE FROM FileList WHERE FileList.filename = ?", (selectionFile[0],))
+        self._loadExistingData()
+        return
+
+    # Plotting
     def plotTrajectory(self, *args):
         trajNumber = int(self._view.trajNumberBox.text())
         jumpNumber = int(self._view.jumpNumberDrawBox.text())
@@ -930,6 +981,7 @@ class Controller:
             else:
                 boundaryValue = self._view.boundaryRawValue.value()
             figure, pieFigure = self._model.produceDiffusionData(data, self._view.diffusionBinSize.value(), self._view.diffusionLowerLimit.value(), self._view.diffusionUpperLimit.value(), errorView, boundaryValue) 
+            # plotly.io.write_image(pieFigure, "Images/DiffusionPieFigure.svg")
             self._view.diffusion_browser.setHtml(figure.to_html(include_plotlyjs='cdn'))
             self._view.diffusionFraction_browser.setHtml(pieFigure.to_html(include_plotlyjs='cdn'))
             self._view.diffusionFraction_browser.setMinimumHeight(400 * len(list(set(data["mutation"]))))
@@ -1022,19 +1074,6 @@ class Controller:
         # url.setScheme(PlotlyApplication.scheme.decode())
         # self._view.trackAngleBox_browser.load(url)       
 
-    def angleDataSave(self):
-        selectionFile = self._view.comboFileList.currentData()
-        if selectionFile == []:
-            return
-        selectionAngle = self._view.angleSelection.currentData()
-        if selectionAngle == []:
-            selectionAngle = [self._view.angleSelection.itemText(i) for i in range(self._view.angleSelection.count())]
-        angleRatio = self._view.angleRatio
-        data = self._model.getAngleData(selectionFile)
-        boundaryValue = self._view.boundaryValueAngle.value()
-        boxData = self._model.produceAngleData(data, boundaryValue, selectionAngle)
-        boxData.to_csv("AngleData.csv")
-
     def dOTMapUpdate(self):
         selectionFile = self._view.comboFileList.currentData()
         if selectionFile == []:
@@ -1077,7 +1116,7 @@ class Controller:
             dOTTrajPoints = "outliers"
         boxFigure = px.box(boxData, x = "Region", y = dOTTrajChoice, color = "mutation", points = dOTTrajPoints, labels = {"mean": "Mean Trajectory Length (s)", "max": "Max Trajectory Length (s)", "median": "Median Trajectory Length (s)", "mutation": "Condition"}, hover_name = "filename")
         self._view.dOTBoxPlotBrowser.setHtml(boxFigure.to_html(include_plotlyjs='cdn'))
-    
+ 
     def heatMapUpdate(self):
         self._view.heatMapPlot.setHtml(self._view.loadingHtml)
         self._view.heatMapCummulativeTrajs.setHtml(self._view.loadingHtml)
@@ -1102,6 +1141,7 @@ class Controller:
         if selectionFile == []:
             return
         boxFigure, densityFigure, pieFigure = self._model.produceDwellTimeFigures(selectionFile)
+        plotly.io.write_image(pieFigure, "Images/DwellPieFigure.svg")
         if boxFigure != [None]:
             self._view.dwellBox_browser.setHtml(boxFigure.to_html(include_plotlyjs='cdn'))
             self._view.dwellDensity_browser.setHtml(densityFigure.to_html(include_plotlyjs='cdn'))
@@ -1111,21 +1151,13 @@ class Controller:
             self._view.dwellDensity_browser.setHtml("")
             self._view.dwellPie_browser.setHtml("")
 
-    def dwellTimeDataSave(self):
-        selectionFile = self._view.comboFileList.currentData()
-        if selectionFile == []:
-            return
-        dwellData, processedDensityData, figureData = self._model.produceDwellTimeData(selectionFile)
-        dwellData.to_csv("DwellData.csv")
-        processedDensityData.to_csv("DensityDwellData.csv")
-        figureData.to_csv("FractionDwellData.csv")
-
     def chromatinTabUpdate(self):
         selectionFile = self._view.comboFileList.currentData()
         if selectionFile == []:
             return
         data = self._model.getChromatinData(selectionFile)
         fastData = data.loc[data.loc[:, "acquisition_rate"] == "fast", ]
+        fastData = data
         fastData.loc[:, "AC"] = np.log2((fastData.loc[:, "A1"] + fastData.loc[:, "A2"] + fastData.loc[:, "A3"]).div(fastData.loc[:, "A16"] + fastData.loc[:, "A17"] + fastData.loc[:, "A18"]))
         fastData = fastData[~fastData.isin([np.nan, np.inf, -np.inf]).any(1)]
         # fastData.replace(np.inf, 2, inplace = True)
@@ -1190,6 +1222,49 @@ class Controller:
         # for n in range(len(mutList)):
         #     subData = fastData.loc[fastData.loc[:, "mutation"] == mutList[n], ]
         return
+    
+    # Data Saving
+    def angleDataSave(self):
+        selectionFile = self._view.comboFileList.currentData()
+        if selectionFile == []:
+            return
+        selectionAngle = self._view.angleSelection.currentData()
+        if selectionAngle == []:
+            selectionAngle = [self._view.angleSelection.itemText(i) for i in range(self._view.angleSelection.count())]
+        angleRatio = self._view.angleRatio
+        data = self._model.getAngleData(selectionFile)
+        boundaryValue = self._view.boundaryValueAngle.value()
+        boxData = self._model.produceAngleData(data, boundaryValue, selectionAngle)
+        boxData.to_csv("AngleData.csv")
+
+    def dwellTimeDataSave(self):
+        selectionFile = self._view.comboFileList.currentData()
+        if selectionFile == []:
+            return
+        dwellData, processedDensityData, figureData = self._model.produceDwellTimeData(selectionFile)
+        dwellData.to_csv("DwellData.csv")
+        processedDensityData.to_csv("DensityDwellData.csv")
+        figureData.to_csv("FractionDwellData.csv")
+
+    def fractionExport(self):
+        try:
+            selectionFile = self._view.comboFileList.currentData()
+            if self._view.diffusionErrorVariation.isChecked() == True:
+                errorView = 0
+            elif self._view.diffusionErrorSTD.isChecked() == True:
+                errorView = 1
+            else:
+                errorView = 2
+            data = self._model.getTrajectoryFiles(selectionFile)
+            if self._view.boundaryComputation.currentText() == "Formula":
+                boundaryValue = np.log10(data.loc[0, "pixelSize"]**2 / (4 * 4 * data.loc[0, "exposure_time"]))
+            else:
+                boundaryValue = self._view.boundaryRawValue.value()
+            plotData, pieData = self._model.produceDiffusionExportData(data, self._view.diffusionBinSize.value(), self._view.diffusionLowerLimit.value(), self._view.diffusionUpperLimit.value(), errorView, boundaryValue) 
+            plotData.to_csv("msdDiffusion.csv")
+            pieData.to_csv("msdDiffusionFraction.csv")
+        except:
+            pass
 
     def tabsUpdate(self):
         tabIndex = self._view.tabs.currentIndex()
@@ -1214,35 +1289,6 @@ class Controller:
             self.dwellTimeUpdate()
         elif tabIndex == 7: # Chromatin tab
             self.chromatinTabUpdate()
-
-    def unselectAllFiles(self):
-        # TODO: Disable the calculation while unticking or untick all at once instead of bringing user back to homepage
-        # Brings user back to home page to prevent it compute as it untick
-        self._view.tabs.setCurrentIndex(0)
-        # Unticking all files
-        self._view.comboFileList.uncheckAll()
-
-    def deleteFiles(self):
-        selectionFile = self._view.comboFileList.currentData()
-        with sqlite3.connect('database.db') as conn:
-            if len(selectionFile) > 1:
-                data = pd.read_sql_query(f"SELECT TrackList.trajID FROM TrackList INNER JOIN TrajectoryList ON TrackList.trajID = TrajectoryList.trajID AND TrajectoryList.filename IN {tuple(selectionFile)}", conn)
-                trajIDs = tuple(pd.unique(data.trajID))
-                conn.execute(f"DELETE FROM TrackList WHERE TrackList.trajID IN {trajIDs}")
-                conn.execute(f"DELETE FROM TrajectoryList WHERE TrajectoryList.filename IN {tuple(selectionFile)}")
-                conn.execute(f"DELETE FROM JDList WHERE JDList.filename IN {tuple(selectionFile)}")
-                conn.execute(f"DELETE FROM DwellTimeData WHERE DwellTimeData.filename IN {tuple(selectionFile)}")
-                conn.execute(f"DELETE FROM FileList WHERE FileList.filename IN {tuple(selectionFile)}")
-            else:
-                data = pd.read_sql_query(f"SELECT TrackList.trajID FROM TrackList INNER JOIN TrajectoryList ON TrackList.trajID = TrajectoryList.trajID AND TrajectoryList.filename = :selectionFile", conn, params = {"selectionFile": selectionFile[0]})
-                trajIDs = tuple(pd.unique(data.trajID))
-                conn.execute(f"DELETE FROM TrackList WHERE TrackList.trajID IN {trajIDs}")
-                conn.execute("DELETE FROM TrajectoryList WHERE TrajectoryList.filename = ?", (selectionFile[0],))
-                conn.execute("DELETE FROM JDList WHERE JDList.filename = ?", (selectionFile[0],))
-                conn.execute("DELETE FROM DwellTimeData WHERE DwellTimeData.filename = ?", (selectionFile[0],))
-                conn.execute("DELETE FROM FileList WHERE FileList.filename = ?", (selectionFile[0],))
-        self._loadExistingData()
-        return
 
     def exportingDatabase(self):
         dirPath = QFileDialog.getExistingDirectory(self._view, "Select Directory")
@@ -1283,7 +1329,7 @@ class Controller:
         self._view.jumpNumberDrawBox.textChanged.connect(self.plotTrajectory)
         self._view.minTrajLength.textChanged.connect(self.plotTrajectory)
         self._view.jumpDistanceToCSV.clicked.connect(self.jumpDistanceDataSave)
-        # self._view.fractionExportButton.clicked.connect(self.fractionExport)
+        self._view.fractionExportButton.clicked.connect(self.fractionExport)
         # self._view.trajTabTrajGroupButton.clicked.connect(self.plotTrajectory)
 
         # Diffusion Plot Interactive
@@ -1327,6 +1373,7 @@ class Controller:
         # Chromatin tab
         self._view.diffusionBoundary.valueChanged.connect(self.chromatinTabUpdate)
     
+    # Start-up
     def loadUploadPreset(self, presetType):
         # Store current values
         try:
@@ -1525,8 +1572,9 @@ class Controller:
     
 class Model:
     def __init__(self):
-        1
+        pass
 
+    # Upload
     @staticmethod
     def processUploadedFileToDatabaseParallel(arg):
         file_name, acquisition_rate, exposureTime, pixelSize, uploadParameters= arg
@@ -1708,6 +1756,7 @@ class Model:
                 dataDwellTime = pd.concat([dataDwellTime, data[n][5]], axis = 0)
         return dataFile, dataTraj, dataTrack, dataJD, dataAngle, dataDwellTime
 
+    # File selection
     def updateMutationFilelist(self, selectionRate):
         if selectionRate == []:
             data = pd.DataFrame({"filename": [], "mutation": []})
@@ -1762,6 +1811,7 @@ class Model:
                         data = pd.read_sql_query(f"select * from {table} where acquisition_rate = :selectionRate AND mutation = :selectionMutation AND filename = :selectionFile", conn, params = {"selectionRate": selectionRate[0], "selectionMutation": selectionMutation[0], "selectionFile": selectionFile[0]})
         return data
 
+    # Statistics feature
     def add_pvalue_annotation(self, fig, df, x_values, x_marks, y_mark, y_range, symbol=''):
         """
         Adding statistics annotation to figure.
@@ -1828,6 +1878,7 @@ class Model:
         ))
         return fig
 
+    # Reading database
     def getTrajectoryFiles(self, selectionFile):
         with sqlite3.connect('database.db') as conn:
             if len(selectionFile) > 1:
@@ -1954,8 +2005,8 @@ class Model:
                 data = pd.read_sql_query(f"select FileList.filename, FileList.mutation, TrajectoryList.trajID, TrajectoryList.traj_length, TrackList.Frame, TrackList.x, TrackList.y from FileList INNER JOIN TrajectoryList ON FileList.filename = TrajectoryList.filename INNER JOIN TrackList ON TrajectoryList.trajID = TrackList.trajID WHERE FileList.filename = :selectionFile", conn, params = {"selectionFile": selectionFile[0]})
         return data
 
-    # Get tracks data for the DAPI background plot in Heat Map tab
     def getHeatMapTrackData(self, selectionFile):
+        # Get tracks data for the DAPI background plot in Heat Map tab
         with sqlite3.connect('database.db') as conn:
             data = pd.read_sql_query(f"select FileList.filename, FileList.mutation, FileList.exposure_time, FileList.pixelSize, TrajectoryList.trajID, TrajectoryList.traj_length, TrackList.Frame, TrackList.x, TrackList.y from FileList INNER JOIN TrajectoryList ON FileList.filename = TrajectoryList.filename INNER JOIN TrackList ON TrajectoryList.trajID = TrackList.trajID WHERE FileList.filename = :selectionFile", conn, params = {"selectionFile": selectionFile[0]})
         return data
@@ -1976,6 +2027,7 @@ class Model:
                 data = pd.read_sql_query(f"select FileList.filename, FileList.mutation, FileList.acquisition_rate, FileList.twoParD1, FileList.twoParD2, FileList.threeParD1, FileList.threeParD2, FileList.threeParD3, TrajectoryList.trajID, TrajectoryList.traj_length, TrajectoryList.D, TrajectoryList.maxDistance, TrackList.Frame, TrackList.x, TrackList.y, TrackList.distance, TrackList.bgIntensity, TrackList.bgRegion, AngleList.A1, AngleList.A2, AngleList.A3, AngleList.A4, AngleList.A5, AngleList.A6, AngleList.A7, AngleList.A8, AngleList.A9, AngleList.A10, AngleList.A11, AngleList.A12, AngleList.A13, AngleList.A14, AngleList.A15, AngleList.A16, AngleList.A17, AngleList.A18 from FileList INNER JOIN TrajectoryList ON FileList.filename = TrajectoryList.filename INNER JOIN TrackList ON TrajectoryList.trajID = TrackList.trajID INNER JOIN AngleList ON TrackList.trajID = AngleList.trajID WHERE FileList.filename = :selectionFile", conn, params = {"selectionFile": selectionFile[0]})
         return data
 
+    # Plotting
     def produceDiffusionData(self, data, binSize, lowerLimit, upperLimit, errorView, boundaryValue):
         mutations = set(data["mutation"])
         mutations = list(mutations)
@@ -2001,6 +2053,7 @@ class Model:
             else: # Standard Error of Mean
                 temp = pd.DataFrame({"x": binCenters, "y": a / len(dataSubset['D']), "error": errorData.sem(axis = 1), "mutation": [mutations[n]] * binSize})
             plotData = pd.concat([plotData, temp], axis = 0)
+            plotData.sort_values(by = ["mutation", "x"], inplace = True)
         if errorView == 0:
             figure = px.line(plotData, x = "x", y = "y", error_y = "error", error_y_minus = "error_minus", color = "mutation", labels = {"x": "Log10(D(um^2/s))", "y": "Normalized Frequency", "mutation": "Condition"})
         else:
@@ -2017,6 +2070,8 @@ class Model:
             figureData.sort_values(by = ["Condition"], inplace = True)
             pieFigure.add_trace(go.Pie(labels = figureData["Condition"], values = figureData["Fraction"], title = pieData["mutation"][n], sort = False), row = n + 1, col = 1)
         pieFigure.update_layout(font = dict(size = 18))
+        # plotly.io.write_image(figure, "Images/DiffusionCoefficient.svg")
+        plotly.io.write_image(pieFigure, "Images/PieDiffusionCoefficient.svg")
         return figure, pieFigure
 
     def produceAnglePlots(self, data, dataTrack, boundaryValue, selectionAngle, viewAllData):
@@ -2132,6 +2187,7 @@ class Model:
         else:
             mutHist = px.bar_polar(mutData, r = "Counts", theta = "Theta", color = "mutation", base = "Base", start_angle = 5, direction = "counterclockwise", labels = {"mutation": "Condition"}, title = "Condition", range_r = [0, max_r])
         mutHist.update_traces(opacity = 0.6)
+        mutHist.update_polars(angularaxis_ticklabelstep = 2)
 
         boundData = data.loc[data.D <= boundaryValue,]
         diffuData = data.loc[data.D > boundaryValue,]
@@ -2681,6 +2737,7 @@ class Model:
                                                }
                                               )
                     dwellData = pd.concat([dwellData, dwellDataTemp], axis = 0)
+                dwellData.sort_values(by = ["mutation"], inplace = True)
                 boxFigure = px.box(dwellData, x = "R", y = "rTime", color = "mutation", points = "all", labels = {"R": "Dwell-Time Types", "rTime": "Dwell-Time (s)", "mutation": "Condition"}, hover_name = "filename")
                 
                 densityData = self.getDwellTimeDensityData(selectionFile)
@@ -2692,9 +2749,11 @@ class Model:
                     trajNumber = len(densityData.loc[densityData.loc[:, "filename"] == file, "traj_length"] > data.loc[data.loc[:, "filename"] == file, "R1"].to_list()[0])
                     cellArea = densityData.loc[densityData.loc[:, "filename"] == file, "pixelSize"]**2 * densityData.loc[densityData.loc[:, "filename"] == file, "cellSize"]
                     processedDensityData.loc[processedDensityData.loc[:, "filename"] == file, "Density"] = trajNumber / cellArea.mean()
+                processedDensityData.sort_values(by = ["mutation"], inplace = True)
                 densityFigure = px.box(processedDensityData, y = "Density", color = "mutation", points = "all", hover_name = "filename", title = "Long Dwell Time Trajectories Density", labels = {"Density": "Trajectories per Area (um^2)", "mutation": "Condition"})
 
                 pieData = data >> group_by(X.mutation) >> summarize(Long = X.F.mean(), Short = (1 - X.F.mean()))
+                pieData.sort_values(by = ["mutation"], inplace = True)
                 pieFigure = make_subplots(rows = pieData.shape[0], cols = 1, specs=[[{"type": "domain"}]] * pieData.shape[0])
                 for n in range(pieData.shape[0]):
                     figureData = pd.DataFrame({"Condition": ["Long", "Short"], 
@@ -2714,6 +2773,35 @@ class Model:
             densityFigure = [None]
             pieFigure = [None]
         return boxFigure, densityFigure, pieFigure
+
+    # Data saving
+    def produceDiffusionExportData(self, data, binSize, lowerLimit, upperLimit, errorView, boundaryValue):
+        mutations = set(data["mutation"])
+        mutations = list(mutations)
+        plotData = pd.DataFrame(data = [])
+        data = data.loc[data.D > lowerLimit,]
+        data = data.loc[data.D < upperLimit,]
+        pieData = data >> group_by(X.mutation) >> summarize(BoundFraction = (X.D < boundaryValue).sum() / summary_functions.n(X.D), UnboundFraction = (X.D >= boundaryValue).sum() / summary_functions.n(X.D)) 
+        for n in range(len(mutations)):
+            dataSubset = data.loc[data["mutation"] == mutations[n]]
+            files = set(dataSubset["filename"])
+            files = list(files)
+            errorData = pd.DataFrame(data = [])
+            for m in range(len(files)):
+                dataSubSubset = dataSubset.loc[dataSubset["filename"] == files[m]]
+                a, binEdges = np.histogram(dataSubSubset['D'], bins = binSize, range = (lowerLimit, upperLimit))
+                errorData = pd.concat([pd.DataFrame({f"{files[m]}": a / len(dataSubSubset['D'])}), errorData], axis = 1)
+            a, binEdges = np.histogram(dataSubset['D'], bins = binSize, range = (lowerLimit, upperLimit))
+            binCenters = 0.5 * (binEdges[:-1] + binEdges[1:])
+            if errorView == 0: # data variation
+                temp = pd.DataFrame({"x": binCenters, "y": a / len(dataSubset['D']), "error": errorData.max(axis = 1) - errorData.min(axis = 1), "error_minus": (a / len(dataSubset['D'])) - errorData.min(axis = 1), "mutation": [mutations[n]] * binSize})
+            elif errorView == 1: # STD
+                temp = pd.DataFrame({"x": binCenters, "y": a / len(dataSubset['D']), "error": errorData.std(axis = 1), "mutation": [mutations[n]] * binSize})
+            else: # Standard Error of Mean
+                temp = pd.DataFrame({"x": binCenters, "y": a / len(dataSubset['D']), "error": errorData.sem(axis = 1), "mutation": [mutations[n]] * binSize})
+            plotData = pd.concat([plotData, temp], axis = 0)
+            plotData.sort_values(by = ["mutation", "x"], inplace = True)
+        return plotData, pieData
 
     def produceDwellTimeData(self, selectionFile):
         # filter out to only slow acquisition data first
