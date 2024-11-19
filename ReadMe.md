@@ -7,7 +7,7 @@ This dashboard is designed for the spatial and temporal analysis of fluorescentl
 <p align="center">
   <img src="Images/PythonAddToPath.png" width="350" title="Reminder about adding Python to PATH.">
 </p>
-3. Once finished, run the “Requirements.bat” attached to install the required Python libraries.
+3. Once finished, run the "py -m pip install GICTrack" for Windows computer and "python -m pip install GICTrack" for MacOS.
 
 # Requirement
 This dashboard requires MATLAB with Statistics and Curve Fitting toolbox installed.
