@@ -7,7 +7,7 @@ This dashboard is designed for the spatial and temporal analysis of fluorescentl
 <p align="center">
   <img src="Images/PythonAddToPath.png" width="350" title="Reminder about adding Python to PATH.">
 </p>
-3. Once finished, type "py -m pip install GICTrack" on Command Prompt (cmd.exe) for Windows computer and "python -m pip install GICTrack" on Terminal for MacOS.
+3. Once finished, type "py -m pip install GICTrack" on Command Prompt (cmd.exe) for Windows computer and "python -m pip install GICTrack" on Terminal for MacOS. <br>
 4. To run the dashboard, type "py -m GICTrack" on Command Prompt (cmd.exe) for Windows computer and "python -m GICTrack" on Terminal for MacOS.
 
 # Requirement
